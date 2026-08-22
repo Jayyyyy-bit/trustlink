@@ -1,0 +1,392 @@
+// features/requirement-detail/mock.ts
+// Mock data only. No backend yet. Values mirror the design.
+
+import type {
+  Business,
+  Requirement,
+  Quotation,
+  LedgerEntry,
+} from '../../lib/types';
+
+export const mockBuyer: Business = {
+  id: 'biz-bayan',
+  registeredName: 'Bayan Logistics Corp.',
+  displayName: 'Bayan Logistics',
+  businessType: 'CORPORATION',
+  category: 'Logistics and Warehousing',
+  city: 'Calamba',
+  province: 'Laguna',
+  contactPerson: 'Marisol Ocampo',
+  contactMobile: '+63 917 555 0142',
+  capabilities: ['Warehousing', 'Freight forwarding', 'Cold chain'],
+  serviceAreas: ['Laguna', 'Batangas', 'Cavite'],
+  credibility: {
+    status: 'VERIFIED',
+    verifiedAt: '2025-03-03T09:00:00+08:00',
+    recheckDueAt: '2026-03-03T09:00:00+08:00',
+    tier: 3,
+    requirementsPosted: 18,
+    requirementsAwarded: 14,
+    quotationsSubmitted: 0,
+    quotationsAwarded: 0,
+  },
+};
+
+export const mockRequirement: Requirement = {
+  id: 'req-0418',
+  ref: 'RQ-2026-0418',
+  buyerId: 'biz-bayan',
+  status: 'OPEN',
+  category: 'Metal Fabrication',
+  title: 'Fabrication and installation of steel mezzanine platform, 240 sqm',
+  scope:
+    'Supply, fabrication, delivery, and installation of a structural steel mezzanine platform inside an existing warehouse bay. Work covers shop fabrication of all members, transport to site, erection, welding, and finishing. The warehouse remains in partial operation throughout, so erection must be sequenced around live racking on the east side of the bay.\n\nCivil works, electrical rough-in, and fire suppression are excluded and handled under separate requirements. Respondents are expected to have completed at least one comparable mezzanine or platform installation.',
+  specifications: [
+    { label: 'Platform area', value: '240 sqm (20.0 m × 12.0 m), clear height 3.2 m beneath' },
+    { label: 'Design load', value: '500 kg/sqm uniformly distributed, per NSCP 2015' },
+    { label: 'Structure', value: 'ASTM A36 wide-flange beams and columns, fully welded connections' },
+    { label: 'Decking', value: '6 mm checkered steel plate, continuously welded to framing' },
+    { label: 'Finish', value: 'Epoxy primer plus two coats industrial enamel, mid-grey' },
+    { label: 'Access', value: 'One flight of steel stairs, 1.2 m width, handrail both sides' },
+  ],
+  quantity: 'One platform, 240 sqm — supplied and installed',
+  budgetMin: 450000,
+  budgetMax: 700000,
+  deliverySite: {
+    name: 'Bayan Logistics Hub 3',
+    address: 'Barangay Canlubang, Calamba, Laguna',
+    accessHours: 'Mon–Sat, 7:00 AM – 6:00 PM',
+    accessNote: 'Warehouse remains in partial operation',
+  },
+  deliveryWindow: '15 Sep — 30 Oct 2026',
+  attachments: [
+    { id: 'a1', filename: 'Structural drawings.pdf', sizeBytes: 4_400_000, mimeType: 'application/pdf', uri: '' },
+    { id: 'a2', filename: 'Site photographs.pdf', sizeBytes: 2_900_000, mimeType: 'application/pdf', uri: '' },
+    { id: 'a3', filename: 'Load specification.pdf', sizeBytes: 348_000, mimeType: 'application/pdf', uri: '' },
+  ],
+  closingAt: '2026-12-14T17:00:00+08:00',
+  publishedAt: '2026-08-04T10:22:00+08:00',
+  quotationCount: 7,
+  awardedQuotationId: null,
+};
+
+/* ─── Respondents ───────────────────────────────────── */
+
+type MockRespondent = {
+  id: string;
+  registeredName: string;
+  city: string;
+  province: string;
+  credibility: Business['credibility'];
+};
+
+export const mockRespondents: Record<string, MockRespondent> = {
+  'biz-ilagan': {
+    id: 'biz-ilagan',
+    registeredName: 'Ilagan Steelworks Inc.',
+    city: 'Cabuyao',
+    province: 'Laguna',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2025-01-14T09:00:00+08:00',
+      recheckDueAt: '2026-01-14T09:00:00+08:00',
+      tier: 3,
+      requirementsPosted: 3,
+      requirementsAwarded: 1,
+      quotationsSubmitted: 64,
+      quotationsAwarded: 22,
+    },
+  },
+  'biz-northgate': {
+    id: 'biz-northgate',
+    registeredName: 'Northgate Fabrication Corp.',
+    city: 'Biñan',
+    province: 'Laguna',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2025-06-02T09:00:00+08:00',
+      recheckDueAt: '2026-06-02T09:00:00+08:00',
+      tier: 2,
+      requirementsPosted: 1,
+      requirementsAwarded: 0,
+      quotationsSubmitted: 31,
+      quotationsAwarded: 9,
+    },
+  },
+  'biz-cordero': {
+    id: 'biz-cordero',
+    registeredName: 'Cordero Industrial Services',
+    city: 'Santo Tomas',
+    province: 'Batangas',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2025-09-09T09:00:00+08:00',
+      recheckDueAt: '2026-09-09T09:00:00+08:00',
+      tier: 1,
+      requirementsPosted: 0,
+      requirementsAwarded: 0,
+      quotationsSubmitted: 12,
+      quotationsAwarded: 3,
+    },
+  },
+  'biz-pampanga': {
+    id: 'biz-pampanga',
+    registeredName: 'Pampanga Structural Trades',
+    city: 'San Fernando',
+    province: 'Pampanga',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2024-11-21T09:00:00+08:00',
+      recheckDueAt: '2025-11-21T09:00:00+08:00',
+      tier: 3,
+      requirementsPosted: 6,
+      requirementsAwarded: 2,
+      quotationsSubmitted: 88,
+      quotationsAwarded: 31,
+    },
+  },
+  'biz-delosreyes': {
+    id: 'biz-delosreyes',
+    registeredName: 'Delos Reyes Welding & Supply',
+    city: 'Santa Rosa',
+    province: 'Laguna',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2026-02-03T09:00:00+08:00',
+      recheckDueAt: '2027-02-03T09:00:00+08:00',
+      tier: 1,
+      requirementsPosted: 0,
+      requirementsAwarded: 0,
+      quotationsSubmitted: 5,
+      quotationsAwarded: 1,
+    },
+  },
+  'biz-marikina': {
+    id: 'biz-marikina',
+    registeredName: 'Marikina Fabricators Co.',
+    city: 'Marikina',
+    province: 'Metro Manila',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2025-07-18T09:00:00+08:00',
+      recheckDueAt: '2026-07-18T09:00:00+08:00',
+      tier: 2,
+      requirementsPosted: 2,
+      requirementsAwarded: 1,
+      quotationsSubmitted: 40,
+      quotationsAwarded: 12,
+    },
+  },
+  'biz-batangas': {
+    id: 'biz-batangas',
+    registeredName: 'Batangas Steel Assembly',
+    city: 'Lipa',
+    province: 'Batangas',
+    credibility: {
+      status: 'VERIFIED',
+      verifiedAt: '2025-05-05T09:00:00+08:00',
+      recheckDueAt: '2026-05-05T09:00:00+08:00',
+      tier: 2,
+      requirementsPosted: 1,
+      requirementsAwarded: 0,
+      quotationsSubmitted: 26,
+      quotationsAwarded: 7,
+    },
+  },
+};
+
+/* ─── Quotations ────────────────────────────────────── */
+/** Released state. Sealed states must never read this array. */
+
+export const mockQuotations: Quotation[] = [
+  {
+    id: 'q1',
+    ref: 'QT-2026-0402',
+    requirementId: 'req-0418',
+    respondentId: 'biz-ilagan',
+    status: 'RELEASED',
+    totalPrice: 486000,
+    leadTimeDays: 42,
+    paymentTerms: '30 / 60 / 10',
+    validityDays: 30,
+    notesToBuyer:
+      'Shop fabrication at our Cabuyao plant, erection sequenced in two phases so the east racking bay stays live. Includes epoxy primer and enamel finish, and one flight of stairs with handrails both sides.',
+    attachments: [
+      { id: 'q1a1', filename: 'Method statement.pdf', sizeBytes: 1_200_000, mimeType: 'application/pdf', uri: '' },
+      { id: 'q1a2', filename: 'Bill of quantities.xlsx', sizeBytes: 240_000, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', uri: '' },
+    ],
+    submittedAt: '2026-08-12T09:14:00+08:00',
+    hashTruncated: '9f4c2a7e',
+    ledgerEntryId: 'led-48198',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q2',
+    ref: 'QT-2026-0409',
+    requirementId: 'req-0418',
+    respondentId: 'biz-northgate',
+    status: 'RELEASED',
+    totalPrice: 512500,
+    leadTimeDays: 35,
+    paymentTerms: '50 / 50',
+    validityDays: 45,
+    notesToBuyer:
+      'Resubmitted after correcting the decking thickness to 6mm checkered plate. Crew of eight, night erection available at no premium if site access is extended.',
+    attachments: [
+      { id: 'q2a1', filename: 'Structural calc sheet.pdf', sizeBytes: 890_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-13T16:02:00+08:00',
+    hashTruncated: 'c17b93de',
+    ledgerEntryId: 'led-48207',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q2-original',
+    ref: 'QT-2026-0331',
+    requirementId: 'req-0418',
+    respondentId: 'biz-northgate',
+    status: 'WITHDRAWN',
+    totalPrice: 498000,
+    leadTimeDays: 35,
+    paymentTerms: '50 / 50',
+    validityDays: 45,
+    notesToBuyer: 'Decking thickness stated in error. Withdrawn and replaced.',
+    attachments: [],
+    submittedAt: '2026-08-10T14:30:00+08:00',
+    hashTruncated: '4e8a01bb',
+    ledgerEntryId: 'led-48171',
+    integrity: 'VALID',
+    withdrawnAt: '2026-08-12T11:20:00+08:00',
+    replacedByQuotationId: 'q2',
+  },
+  {
+    id: 'q3',
+    ref: 'QT-2026-0398',
+    requirementId: 'req-0418',
+    respondentId: 'biz-cordero',
+    status: 'RELEASED',
+    totalPrice: 455000,
+    leadTimeDays: 56,
+    paymentTerms: '20 / 70 / 10',
+    validityDays: 30,
+    notesToBuyer:
+      'Lowest-cost option with a longer programme. Fabrication subcontracted to an accredited Batangas shop; erection and welding by our own NC II certified crew.',
+    attachments: [
+      { id: 'q3a1', filename: 'Company profile.pdf', sizeBytes: 1_800_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-11T08:47:00+08:00',
+    hashTruncated: 'a02f7761',
+    ledgerEntryId: 'led-48184',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q4',
+    ref: 'QT-2026-0391',
+    requirementId: 'req-0418',
+    respondentId: 'biz-pampanga',
+    status: 'RELEASED',
+    totalPrice: 689000,
+    leadTimeDays: 28,
+    paymentTerms: '50 / 40 / 10',
+    validityDays: 60,
+    notesToBuyer:
+      'Fastest programme on offer. Price includes third-party weld inspection, as-built drawings, and a two-year structural warranty on all welded connections.',
+    attachments: [
+      { id: 'q4a1', filename: 'Programme of works.pdf', sizeBytes: 760_000, mimeType: 'application/pdf', uri: '' },
+      { id: 'q4a2', filename: 'Weld procedure.pdf', sizeBytes: 520_000, mimeType: 'application/pdf', uri: '' },
+      { id: 'q4a3', filename: 'Past projects.pdf', sizeBytes: 3_100_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-09T15:31:00+08:00',
+    hashTruncated: 'de55c204',
+    ledgerEntryId: 'led-48162',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q5',
+    ref: 'QT-2026-0421',
+    requirementId: 'req-0418',
+    respondentId: 'biz-delosreyes',
+    status: 'RELEASED',
+    totalPrice: 412000,
+    leadTimeDays: 70,
+    paymentTerms: '100% on completion',
+    validityDays: 15,
+    notesToBuyer:
+      'Owner-operated shop in Santa Rosa. No advance required. Programme assumes single-shift erection with a crew of four.',
+    attachments: [
+      { id: 'q5a1', filename: 'Quotation sheet.pdf', sizeBytes: 180_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-14T13:08:00+08:00',
+    hashTruncated: 'b6301f95',
+    ledgerEntryId: 'led-48219',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q6',
+    ref: 'QT-2026-0412',
+    requirementId: 'req-0418',
+    respondentId: 'biz-marikina',
+    status: 'RELEASED',
+    totalPrice: 534750,
+    leadTimeDays: 42,
+    paymentTerms: '40 / 40 / 20',
+    validityDays: 30,
+    notesToBuyer:
+      'Includes hot-dip galvanising of stair components in place of enamel. Delivery in three lots to suit warehouse operations.',
+    attachments: [
+      { id: 'q6a1', filename: 'Technical proposal.pdf', sizeBytes: 1_400_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-13T10:55:00+08:00',
+    hashTruncated: '77ae5c30',
+    ledgerEntryId: 'led-48203',
+    integrity: 'FLAGGED',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+  {
+    id: 'q7',
+    ref: 'QT-2026-0426',
+    requirementId: 'req-0418',
+    respondentId: 'biz-batangas',
+    status: 'RELEASED',
+    totalPrice: 598000,
+    leadTimeDays: 35,
+    paymentTerms: '30 / 70',
+    validityDays: 30,
+    notesToBuyer:
+      'Full ASTM A36 wide-flange members from a single mill heat, with mill certificates supplied. Erection crew mobilises within five days of award.',
+    attachments: [
+      { id: 'q7a1', filename: 'Mill certificates.pdf', sizeBytes: 640_000, mimeType: 'application/pdf', uri: '' },
+      { id: 'q7a2', filename: 'Erection plan.pdf', sizeBytes: 980_000, mimeType: 'application/pdf', uri: '' },
+    ],
+    submittedAt: '2026-08-14T16:52:00+08:00',
+    hashTruncated: '1c9db482',
+    ledgerEntryId: 'led-48224',
+    integrity: 'VALID',
+    withdrawnAt: null,
+    replacedByQuotationId: null,
+  },
+];
+
+/** The respondent's own sealed record. Drives the submitted variant of RESPONDENT. */
+export const mockOwnQuotation: Quotation = mockQuotations[0];
+
+export const mockLedgerEntry: LedgerEntry = {
+  id: 'led-48213',
+  sequence: 48213,
+  type: 'QUOTATION_SUBMITTED',
+  subjectId: 'q1',
+  hash: '9f4c2a7e1b03d55f8a6c2049e71b3fd2',
+  previousHash: 'aa30f19c77b45e02d183ca6690f14b77',
+  createdAt: '2026-08-12T09:14:00+08:00',
+};
