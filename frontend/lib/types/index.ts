@@ -61,6 +61,18 @@ export type RequirementStatus =
   | 'CLOSED_NO_AWARD'
   | 'CANCELLED';      // proposed, pending decision 04
 
+export interface SpecRow {
+  label: string;
+  value: string;
+}
+
+export interface DeliverySite {
+  name: string;        // "Bayan Logistics Hub 3"
+  address: string;     // "Barangay Canlubang, Calamba, Laguna"
+  accessHours: string; // "Mon–Sat, 7:00 AM – 6:00 PM"
+  accessNote: string;  // "Warehouse remains in partial operation"
+}
+
 export interface Attachment {
   id: string;
   filename: string;
@@ -77,12 +89,11 @@ export interface Requirement {
   category: string;
   title: string;
   scope: string;
-  specifications: string;
-  quantity: number;
-  unit: string;
+  specifications: SpecRow[];
+  quantity: string; 
   budgetMin: number | null;   // PHP, indicative
   budgetMax: number | null;
-  deliveryLocation: string;
+  deliverySite: DeliverySite;
   deliveryWindow: string;
   attachments: Attachment[];
   closingAt: ISODateTime;     // the only field that fires a platform event
