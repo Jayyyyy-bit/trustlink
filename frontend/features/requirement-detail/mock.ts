@@ -64,7 +64,7 @@ export const mockRequirement: Requirement = {
     { id: 'a2', filename: 'Site photographs.pdf', sizeBytes: 2_900_000, mimeType: 'application/pdf', uri: '' },
     { id: 'a3', filename: 'Load specification.pdf', sizeBytes: 348_000, mimeType: 'application/pdf', uri: '' },
   ],
-  closingAt: '2026-08-14T17:00:00+08:00',
+  closingAt: '2026-12-14T17:00:00+08:00',
   publishedAt: '2026-08-04T10:22:00+08:00',
   quotationCount: 7,
   awardedQuotationId: null,

@@ -12,6 +12,7 @@ export const color = {
   primary: '#164E78',
   primaryPressed: '#103A5A',
   primaryFaint: 'rgba(22,78,120,0.08)',
+  primaryBorder: 'rgba(22,78,120,0.35)',
 
   // Red — flagged, system events, destructive
   danger: '#B4331F',
@@ -104,6 +105,14 @@ export const elevation = {
 /** Phone-width on every platform. One layout, three targets. */
 export const layout = {
   maxWidth: 480,
+  maxWidthWide: 1100,
   screenPadding: 20,
   minTouchTarget: 44,
+  sideColumnMinWidth: 270,
+  factMinWidth: 160,
+} as const;
+
+/** Below this, single-column phone layout. At and above, two-column wide layout. */
+export const breakpoint = {
+  desktop: 900,
 } as const;
