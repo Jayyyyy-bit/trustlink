@@ -612,6 +612,18 @@ function CtaBanner({ onPostRequirement }: { onPostRequirement?: () => void }) {
 
 /* ─── Feed card ──────────────────────────────────────── */
 
+/** `transitionProperty`/`transitionDuration` aren't in RN's ViewStyle type — react-native-web
+ *  passes them straight through to CSS, same escape hatch as stickyOnWeb/fixedOnWeb below.
+ *  Native has no hover state to transition, so this is a no-op there. */
+const cardHoverTransitionOnWeb: ViewStyle =
+  Platform.OS === 'web'
+    ? ({
+        transitionProperty: 'transform, border-color',
+        transitionDuration: '150ms',
+        transitionTimingFunction: 'ease-out',
+      } as unknown as ViewStyle)
+    : {};
+
 function RequirementCard({
   requirement,
   buyer,
@@ -639,13 +651,19 @@ function RequirementCard({
   const urgent = !closed && hoursLeft < 24;
   const critical = !closed && hoursLeft < 6;
   const buyerName = buyer.displayName ?? buyer.registeredName;
+  const [hovered, setHovered] = useState(false);
 
   return (
     <Pressable
       onPress={onSelect}
+      {...(Platform.OS === 'web'
+        ? { onHoverIn: () => setHovered(true), onHoverOut: () => setHovered(false) }
+        : null)}
       style={[
         styles.card,
-        { borderColor: urgent ? color.dangerBorder : color.border },
+        cardHoverTransitionOnWeb,
+        { borderColor: urgent ? (hovered ? color.danger : color.dangerBorder) : hovered ? color.borderStrong : color.border },
+        hovered ? styles.cardHovered : null,
         matched ? styles.cardMatched : null,
       ]}
     >
@@ -1056,9 +1074,18 @@ function PhoneHomeFeed(props: HomeFeedProps) {
  * Reproduces docs/design/Trustlink Home Feed.dc.html's structure directly: sticky
  * header with full nav, left sidebar (profile + stats), centre column (CTA, feed,
  * your requirements, recently closed), right sidebar (closing-soon rail, how-matching),
- * floating messages widget. Capped at layout.maxWidthDashboard (1580) — wider than
+ * floating messages widget. Capped at layout.maxWidthDashboard (1760) — wider than
  * RequirementDetail.tsx's two-column layout.maxWidthWide, since a three-column dashboard
- * needs the extra room; close to but not identical to the source design's own 1720px. */
+ * needs the extra room, and wider than the source design's own 1720px so the three
+ * columns use more of the window on large screens.
+ *
+ * The category filter row lives in page content (not the header), and on web sticks to
+ * the top of the viewport just below the fixed header once the user scrolls past it —
+ * same stickyOnWeb/native gating as the sidebar below. Its resting position depends on
+ * the header's rendered height (which varies with alert badges, nav wrapping, etc.), so
+ * both the header and the filter row report their measured heights via onLayout and the
+ * filter row's `top` — and the sidebar's, which now docks beneath the filter row too —
+ * are derived from those measurements instead of a hardcoded constant. */
 
 const stickyOnWeb: ViewStyle =
   Platform.OS === 'web' ? ({ position: 'sticky', top: 0 } as unknown as ViewStyle) : {};
@@ -1073,12 +1100,24 @@ const fixedOnWeb: ViewStyle =
 function WideHomeFeed(props: HomeFeedProps) {
   const st = useHomeFeed(props);
   const { viewer, myRequirements, recentlyClosed, requirementBuyers, alerts, messageThreads } = props;
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [categoryHeight, setCategoryHeight] = useState(0);
+  const sidebarTop: ViewStyle = Platform.OS === 'web' ? { top: headerHeight + categoryHeight } : {};
 
   return (
     <View style={styles.root}>
     <ScrollView style={styles.root} contentContainerStyle={styles.scrollContentWide}>
-      <View style={[styles.headerSticky, stickyOnWeb]}>
+      <View
+        style={[styles.headerSticky, stickyOnWeb]}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+      >
         <Header viewer={viewer} alerts={alerts} now={st.now} alertsOpen={st.alertsOpen} onToggleAlerts={() => st.setAlertsOpen((v) => !v)} showNav />
+      </View>
+
+      <View
+        style={[styles.categorySticky, stickyOnWeb, Platform.OS === 'web' ? { top: headerHeight } : {}]}
+        onLayout={(e) => setCategoryHeight(e.nativeEvent.layout.height)}
+      >
         <View style={styles.pageWide}>
           <CategoryPills categories={st.categories} active={st.categoryFilter} onSelect={st.setCategoryFilter} />
         </View>
@@ -1086,7 +1125,7 @@ function WideHomeFeed(props: HomeFeedProps) {
 
       <View style={styles.pageWide}>
         <View style={styles.columnsWide}>
-          <View style={[styles.sideColumn, stickyOnWeb, { top: 132 }]}>
+          <View style={[styles.sideColumn, stickyOnWeb, sidebarTop]}>
             <ProfileCard viewer={viewer} />
             <ActivityStatsCard viewer={viewer} />
           </View>
@@ -1144,7 +1183,7 @@ function WideHomeFeed(props: HomeFeedProps) {
             </View>
           </View>
 
-          <View style={[styles.sideColumn, stickyOnWeb, { top: 132 }]}>
+          <View style={[styles.sideColumn, stickyOnWeb, sidebarTop]}>
             <View style={styles.statsCard}>
               <Text style={styles.microLabel}>Closing within 24 hours</Text>
               <View>
@@ -1185,7 +1224,8 @@ const styles = StyleSheet.create({
   scrollContentWide: { paddingBottom: space.section },
   page: { width: '100%', paddingHorizontal: layout.screenPadding, gap: space.lg, paddingTop: space.lg },
   pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, marginHorizontal: 'auto', paddingHorizontal: layout.screenPadding },
-  headerSticky: { backgroundColor: color.canvas, borderBottomWidth: 1, borderBottomColor: color.border, zIndex: 50, paddingBottom: space.sm },
+  headerSticky: { backgroundColor: color.canvas, borderBottomWidth: 1, borderBottomColor: color.border, zIndex: 50 },
+  categorySticky: { backgroundColor: color.canvas, borderBottomWidth: 1, borderBottomColor: color.border, zIndex: 40 },
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl, paddingVertical: space.xl },
   sideColumn: { flex: 1, minWidth: layout.sideColumnMinWidth, maxWidth: 340, gap: space.lg },
   mainColumnWide: { flex: 3, minWidth: 0, gap: space.lg },
@@ -1294,6 +1334,7 @@ const styles = StyleSheet.create({
   /* feed card */
   card: { borderWidth: 1, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.xl, gap: space.md },
   cardMatched: { borderLeftWidth: 3, borderLeftColor: color.primary },
+  cardHovered: { transform: [{ scale: 1.01 }] },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   categoryBadge: { borderWidth: 1, borderColor: color.primaryBorder, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs },
   categoryBadgeLabel: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.primary },
