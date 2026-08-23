@@ -49,6 +49,8 @@ export interface Business {
   capabilities: string[];   // 3–8, drives feed matching
   serviceAreas: string[];
   credibility: CredibilityBlock;
+  profileCompletionPct: number; // 0–100
+  memberSinceYear: number;
 }
 
 /* ─── Requirement ───────────────────────────────────── */
@@ -99,6 +101,7 @@ export interface Requirement {
   closingAt: ISODateTime;     // the only field that fires a platform event
   publishedAt: ISODateTime | null;
   quotationCount: number;     // count only while sealed — never contents
+  lastQuotationAt: ISODateTime | null; // timing only, never contents — recency signal for feed cards
   awardedQuotationId: string | null;
 }
 
@@ -151,6 +154,36 @@ export interface LedgerEntry {
   hash: string;
   previousHash: string | null;
   createdAt: ISODateTime;
+}
+
+/* ─── Alerts ────────────────────────────────────────── */
+
+export type AlertType =
+  | 'REQUIREMENT_CLOSING'
+  | 'QUOTATION_RECEIVED'
+  | 'DECISION'
+  | 'VERIFICATION';
+
+export interface Alert {
+  id: string;
+  type: AlertType;
+  title: string;
+  detail: string;
+  createdAt: ISODateTime;
+  urgent: boolean;
+  read: boolean;
+}
+
+/* ─── Messaging ─────────────────────────────────────── */
+
+export interface MessageThread {
+  id: string;
+  counterpartyId: BusinessId;
+  counterpartyName: string;
+  requirementRef: RequirementRef;
+  lastMessagePreview: string;
+  lastMessageAt: ISODateTime;
+  unread: boolean;
 }
 
 /* ─── Screen state unions ───────────────────────────── */

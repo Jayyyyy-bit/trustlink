@@ -30,6 +30,8 @@ export const mockBuyer: Business = {
     quotationsSubmitted: 0,
     quotationsAwarded: 0,
   },
+  profileCompletionPct: 100,
+  memberSinceYear: 2022,
 };
 
 export const mockRequirement: Requirement = {
@@ -67,6 +69,7 @@ export const mockRequirement: Requirement = {
   closingAt: '2026-12-14T17:00:00+08:00',
   publishedAt: '2026-08-04T10:22:00+08:00',
   quotationCount: 7,
+  lastQuotationAt: '2026-08-14T16:52:00+08:00',
   awardedQuotationId: null,
 };
 
