@@ -27,6 +27,7 @@ export const color = {
   // Lines
   border: 'rgba(15,15,14,0.12)',
   borderFaint: 'rgba(15,15,14,0.09)',
+  borderStrong: 'rgba(15,15,14,0.24)',
 
   onPrimary: '#FFFFFF',
 } as const;
@@ -106,6 +107,9 @@ export const elevation = {
 export const layout = {
   maxWidth: 480,
   maxWidthWide: 1100,
+  /** Three-column dashboard screens (e.g. the home feed) need more room than the
+   *  two-column wide layout — this is that wider cap, not a replacement for it. */
+  maxWidthDashboard: 1760,
   screenPadding: 20,
   minTouchTarget: 44,
   sideColumnMinWidth: 270,
