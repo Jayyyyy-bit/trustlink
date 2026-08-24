@@ -182,10 +182,28 @@ function StepLabel({ n, label, primary = false }: { n: string; label: string; pr
   );
 }
 
-function Pill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function Pill({
+  label,
+  active,
+  onPress,
+  variant = 'chip',
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  /** 'segment' reads as one grouped mode choice (e.g. Line items / Total price only)
+   *  rather than a freestanding filter chip. */
+  variant?: 'chip' | 'segment';
+}) {
+  const segment = variant === 'segment';
   return (
-    <Pressable onPress={onPress} style={[styles.pill, active ? styles.pillActive : null]}>
-      <Text style={[styles.pillLabel, active ? styles.pillLabelActive : null]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[segment ? styles.segment : styles.pill, active ? (segment ? styles.segmentActive : styles.pillActive) : null]}
+    >
+      <Text style={[segment ? styles.segmentLabel : styles.pillLabel, active ? (segment ? styles.segmentLabelActive : styles.pillLabelActive) : null]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -199,10 +217,10 @@ function XGlyph({ tone }: { tone: string }) {
   );
 }
 
-function AddDashedButton({ label, onPress }: { label: string; onPress: () => void }) {
+function AddDashedButton({ label, onPress, prominent = false }: { label: string; onPress: () => void; prominent?: boolean }) {
   return (
-    <Pressable onPress={onPress} style={styles.addDashed}>
-      <Text style={styles.addDashedLabel}>+ {label}</Text>
+    <Pressable onPress={onPress} style={[styles.addDashed, prominent ? styles.addDashedProminent : null]}>
+      <Text style={[styles.addDashedLabel, prominent ? styles.addDashedLabelProminent : null]}>+ {label}</Text>
     </Pressable>
   );
 }
@@ -262,6 +280,10 @@ function CheckGlyph() {
   return <View style={styles.checkGlyph} />;
 }
 
+function ChevronGlyph({ open }: { open: boolean }) {
+  return <View style={[styles.chevronGlyph, open ? styles.chevronGlyphOpen : null]} />;
+}
+
 function AckCheckbox({ checked, onToggle, children }: { checked: boolean; onToggle: () => void; children: ReactNode }) {
   return (
     <Pressable onPress={onToggle} style={styles.ackRow}>
@@ -315,6 +337,7 @@ function ScopeSidebarCard({
   buyer: Business;
   onOpenBuyer?: (businessId: BusinessId) => void;
 }) {
+  const [showSpec, setShowSpec] = useState(false);
   return (
     <View style={styles.sidebarCard}>
       <SectionLabel>What you are pricing</SectionLabel>
@@ -334,15 +357,20 @@ function ScopeSidebarCard({
       </View>
 
       <View style={styles.sidebarDivided}>
-        <SectionLabel>Specification</SectionLabel>
-        <View style={styles.specTable}>
-          {requirement.specifications.map((row, i) => (
-            <View key={row.label} style={[styles.specRow, i % 2 === 1 ? styles.specRowAlt : null]}>
-              <Text style={styles.specKey}>{row.label}</Text>
-              <Text style={styles.specValue}>{row.value}</Text>
-            </View>
-          ))}
-        </View>
+        <Pressable onPress={() => setShowSpec((v) => !v)} style={styles.specDisclosureRow} hitSlop={4}>
+          <SectionLabel>Specification</SectionLabel>
+          <ChevronGlyph open={showSpec} />
+        </Pressable>
+        {showSpec && (
+          <View style={styles.specTable}>
+            {requirement.specifications.map((row, i) => (
+              <View key={row.label} style={[styles.specRow, i % 2 === 1 ? styles.specRowAlt : null]}>
+                <Text style={styles.specKey}>{row.label}</Text>
+                <Text style={styles.specValue}>{row.value}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
       {requirement.attachments.length > 0 && (
@@ -499,9 +527,9 @@ function PriceSection({ requirement, st }: { requirement: Requirement; st: FormS
       <View style={styles.cardHeaderRow}>
         <StepLabel n="01" label="Your price" />
         <View style={{ flex: 1 }} />
-        <View style={styles.pillGroup}>
-          <Pill label="Line items" active={st.priceMode === 'LINES'} onPress={() => st.setPriceMode('LINES')} />
-          <Pill label="Total price only" active={st.priceMode === 'TOTAL'} onPress={() => st.setPriceMode('TOTAL')} />
+        <View style={styles.segmentGroup}>
+          <Pill label="Line items" active={st.priceMode === 'LINES'} onPress={() => st.setPriceMode('LINES')} variant="segment" />
+          <Pill label="Total price only" active={st.priceMode === 'TOTAL'} onPress={() => st.setPriceMode('TOTAL')} variant="segment" />
         </View>
       </View>
 
@@ -546,7 +574,7 @@ function PriceSection({ requirement, st }: { requirement: Requirement; st: FormS
             </View>
           ))}
           <View style={{ marginTop: space.sm }}>
-            <AddDashedButton label="Add line item" onPress={st.addItem} />
+            <AddDashedButton label="Add line item" onPress={st.addItem} prominent />
           </View>
         </View>
       ) : (
@@ -634,7 +662,7 @@ function NotesAttachmentsSection({ st, isWide }: { st: FormState; isWide: boolea
         value={st.note}
         onChangeText={st.setNote}
         multiline
-        numberOfLines={5}
+        numberOfLines={3}
         placeholder="e.g. Shop fabrication at our Cabuyao plant, erection sequenced in two phases so the east racking bay stays live."
         placeholderTextColor={color.inkFaint}
         style={styles.noteInput}
@@ -697,7 +725,7 @@ function SealSection({
       <StepLabel n="04" label="Seal and submit" primary />
       <Text style={styles.sealHeading}>This is a commitment, not a saved draft.</Text>
 
-      <View style={{ gap: space.md, marginTop: space.md }}>
+      <View style={{ gap: space.sm, marginTop: space.sm }}>
         <AckCheckbox checked={st.ack1} onToggle={() => st.setAck1((v) => !v)}>
           Once I seal this, no one can read it. Not the buyer. Not any other business quoting. Not Trustlink staff.
           It stays locked until{' '}
@@ -1021,15 +1049,15 @@ export default function QuotationSubmission(props: QuotationSubmissionProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
-  scrollContent: { alignItems: 'center', paddingVertical: space.xxl, paddingBottom: space.section },
+  scrollContent: { alignItems: 'center', paddingVertical: space.lg, paddingBottom: space.xxl },
 
-  page: { width: '100%', maxWidth: layout.maxWidth, paddingHorizontal: layout.screenPadding, gap: space.lg },
-  pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, paddingHorizontal: layout.screenPadding, gap: space.lg },
+  page: { width: '100%', maxWidth: layout.maxWidth, paddingHorizontal: layout.screenPadding, gap: space.md },
+  pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, paddingHorizontal: layout.screenPadding, gap: space.md },
   receiptPage: { width: '100%', maxWidth: RECEIPT_MAX_WIDTH, paddingHorizontal: layout.screenPadding, gap: space.lg },
 
-  columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
-  mainColumn: { flex: 3, gap: space.lg },
-  sideColumn: { flex: 1, minWidth: layout.sideColumnMinWidth, gap: space.lg },
+  columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  mainColumn: { flex: 3, gap: space.md },
+  sideColumn: { flex: 1, minWidth: layout.sideColumnMinWidth, gap: space.md },
 
   breadcrumbRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   breadcrumbLink: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkFaint },
@@ -1045,8 +1073,8 @@ const styles = StyleSheet.create({
   },
   pageSubtitle: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
 
-  card: { ...elevation.cardRaised, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.xl, gap: space.md },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' },
+  card: { ...elevation.cardRaised, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.lg, gap: space.sm },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
 
   sectionLabel: {
     fontFamily: font.mono,
@@ -1074,59 +1102,68 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: color.primaryFaint, borderColor: color.primary },
   pillLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.inkMuted },
   pillLabelActive: { color: color.primary },
-  pillGroup: { flexDirection: 'row', gap: space.xs },
-  pillGroupWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.sm },
+  pillGroupWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
+
+  /* segmented mode choice (e.g. Line items / Total price only) — one grouped control,
+   *  visually distinct from the freestanding filter chips above */
+  segmentGroup: { flexDirection: 'row', backgroundColor: color.surfaceSunken, borderWidth: 1, borderColor: color.border, borderRadius: radius.pill, padding: 2 },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill },
+  segmentActive: { backgroundColor: color.primary },
+  segmentLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.inkMuted },
+  segmentLabelActive: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.onPrimary },
 
   /* closing banner */
-  closingBanner: { flexDirection: 'row', alignItems: 'center', gap: space.xl, flexWrap: 'wrap', backgroundColor: color.primaryFaint, borderColor: color.primaryBorder },
+  closingBanner: { flexDirection: 'row', alignItems: 'center', gap: space.lg, flexWrap: 'wrap', paddingVertical: space.sm, paddingHorizontal: space.lg, backgroundColor: color.primaryFaint, borderColor: color.primaryBorder },
   closingCountdownRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   closingDot: { width: 7, height: 7, borderRadius: radius.pill },
-  closingCountdown: { fontFamily: font.display, fontSize: fontSize.lg, letterSpacing: letterSpacing.tight, color: color.ink },
+  closingCountdown: { fontFamily: font.display, fontSize: fontSize.md, letterSpacing: letterSpacing.tight, color: color.ink },
   closingCountdownUrgent: { color: color.danger },
-  closingDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.border, minHeight: 40 },
+  closingDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.border, minHeight: 30 },
   closingNote: { flex: 1, minWidth: 220 },
   closingNoteText: { fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
 
   /* line items */
   lineItemsBox: { borderWidth: 1, borderColor: color.borderFaint, borderRadius: radius.lg, overflow: 'hidden' },
-  lineItemsHeaderRow: { flexDirection: 'row', gap: space.md, padding: space.md, backgroundColor: color.surfaceSunken, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
+  lineItemsHeaderRow: { flexDirection: 'row', gap: space.md, padding: space.sm, backgroundColor: color.surfaceSunken, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
   lineItemsHeaderLabel: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.inkFaint },
-  lineItemRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
-  lineItemInput: { minWidth: 0, borderWidth: 1, borderColor: 'transparent', borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: space.sm, fontFamily: font.body, fontSize: fontSize.sm, color: color.ink },
+  lineItemRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.xs, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
+  lineItemInput: { minWidth: 0, borderWidth: 1, borderColor: 'transparent', borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: space.xs, fontFamily: font.body, fontSize: fontSize.sm, color: color.ink },
   lineItemAmount: { fontFamily: font.monoMedium, fontSize: fontSize.sm, textAlign: 'right', color: color.ink },
   lineItemRemove: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
 
   addDashed: { alignSelf: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderColor: color.border, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm },
   addDashedLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.inkMuted },
+  addDashedProminent: { borderStyle: 'solid', borderColor: color.primary, backgroundColor: color.primaryFaint },
+  addDashedLabelProminent: { fontFamily: font.bodySemi, color: color.primary },
 
   totalOnlyBox: { maxWidth: 340 },
   totalOnlyField: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: space.sm, marginTop: space.sm },
   totalOnlyCurrency: { fontFamily: font.mono, fontSize: fontSize.lg, color: color.inkFaint },
   totalOnlyInput: { flex: 1, minWidth: 0, fontFamily: font.monoMedium, fontSize: fontSize.lg, color: color.ink },
 
-  grandTotalRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
-  grandTotalValue: { fontFamily: font.display, fontSize: fontSize.xl, letterSpacing: letterSpacing.tight, color: color.ink },
+  grandTotalRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, marginTop: space.xs, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.lg, backgroundColor: color.primaryFaint },
+  grandTotalValue: { fontFamily: font.display, fontSize: fontSize.display, lineHeight: lineHeight.display, letterSpacing: letterSpacing.tight, color: color.ink },
   budgetNote: { textAlign: 'right', fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
 
   /* terms */
-  termsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xl },
+  termsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   termsGridItem: { flexGrow: 1, flexBasis: 230, minWidth: 230 },
   fieldLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.ink },
   fieldCaption: { marginTop: space.xs, fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
-  fieldNote: { marginTop: space.sm, fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
-  leadField: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: space.sm },
+  fieldNote: { marginTop: space.xs, fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
+  leadField: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: space.xs },
   leadInput: { flex: 1, minWidth: 0, fontFamily: font.monoMedium, fontSize: fontSize.base, color: color.ink },
   leadUnit: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
-  dividedTop: { marginTop: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
+  dividedTop: { marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: color.borderFaint },
 
   /* notes and attachments */
-  notesAttachmentsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  notesAttachmentsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg },
   notesAttachmentsCol: { flex: 1, minWidth: 0 },
   notesAttachmentsDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.borderFaint },
-  noteInput: { marginTop: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, padding: space.md, fontFamily: font.body, fontSize: fontSize.base, lineHeight: lineHeight.base, color: color.ink, textAlignVertical: 'top' },
+  noteInput: { marginTop: space.xs, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, padding: space.sm, fontFamily: font.body, fontSize: fontSize.base, lineHeight: lineHeight.base, color: color.ink, textAlignVertical: 'top' },
   noteCount: { marginTop: space.xs, textAlign: 'right', fontFamily: font.body, fontSize: fontSize.sm, color: color.inkFaint },
-  filesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.md },
-  fileChip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: space.sm, maxWidth: 220 },
+  filesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  fileChip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, paddingHorizontal: space.md, paddingVertical: space.xs, maxWidth: 220 },
   fileChipName: { flexShrink: 1, fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.ink },
 
   /* x glyph */
@@ -1140,16 +1177,18 @@ const styles = StyleSheet.create({
   checkbox: { width: 18, height: 18, marginTop: 2, borderWidth: 1.4, borderColor: color.border, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   checkboxOn: { backgroundColor: color.primary, borderColor: color.primary },
   checkGlyph: { width: 9, height: 5, marginTop: -2, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: color.onPrimary, transform: [{ rotate: '-45deg' }] },
+  chevronGlyph: { width: 6, height: 6, borderRightWidth: 1.5, borderBottomWidth: 1.5, borderColor: color.inkFaint, transform: [{ rotate: '-45deg' }] },
+  chevronGlyphOpen: { marginTop: -2, transform: [{ rotate: '45deg' }] },
   ackText: { flex: 1, fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
   ackBold: { fontFamily: font.bodySemi, color: color.ink },
-  sealFooterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap', marginTop: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
+  sealFooterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap', marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: color.borderFaint },
   sealHint: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted, maxWidth: 220 },
 
   actionButton: { minHeight: layout.minTouchTarget, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
   actionButtonLabel: { fontFamily: font.bodySemi, fontSize: fontSize.sm },
 
   /* sidebar */
-  sidebarCard: { ...elevation.cardRaised, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.lg, gap: space.md },
+  sidebarCard: { ...elevation.cardRaised, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.md, gap: space.sm },
   sidebarTitle: { fontFamily: font.display, fontSize: fontSize.md, lineHeight: lineHeight.md, letterSpacing: letterSpacing.tight, color: color.ink },
   sidebarBuyerRow: {
     flexDirection: 'row',
@@ -1166,10 +1205,11 @@ const styles = StyleSheet.create({
   sidebarBuyerNameHovered: { color: color.primary },
   verifiedTag: { flexDirection: 'row', alignItems: 'center' },
   verifiedTagLabel: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.primary },
-  sidebarFacts: { gap: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
+  sidebarFacts: { gap: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: color.borderFaint },
   factValue: { marginTop: space.xs, fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.ink },
-  sidebarDivided: { paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
+  sidebarDivided: { paddingTop: space.sm, borderTopWidth: 1, borderTopColor: color.borderFaint },
   sidebarScopeText: { marginTop: space.sm, fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
+  specDisclosureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   specTable: { marginTop: space.sm, borderWidth: 1, borderColor: color.borderFaint, borderRadius: radius.lg, overflow: 'hidden' },
   specRow: { padding: space.sm, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
   specRowAlt: { backgroundColor: color.surfaceSunken },
