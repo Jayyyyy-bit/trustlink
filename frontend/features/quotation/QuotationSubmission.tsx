@@ -34,8 +34,10 @@ import {
   layout,
   breakpoint,
 } from '../../components/ui/tokens';
+import { AvatarChip, initials } from '../../components/ui/AvatarChip';
 import type {
   Business,
+  BusinessId,
   Requirement,
   Quotation,
   LedgerEntry,
@@ -65,6 +67,7 @@ interface FormProps {
   onSubmit?: (input: QuotationDraftInput) => void;
   onSaveDraft?: () => void;
   onBack?: () => void;
+  onOpenBuyer?: (businessId: BusinessId) => void;
 }
 
 interface SealedReceiptProps {
@@ -287,17 +290,37 @@ function FactBlock({ label, value }: { label: string; value: string }) {
 
 /* ─── Sidebar: what you are pricing ─────────────────── */
 
-function ScopeSidebarCard({ requirement, buyer }: { requirement: Requirement; buyer: Business }) {
+function BuyerIdentityRow({ buyer, onOpenBuyer }: { buyer: Business; onOpenBuyer?: (businessId: BusinessId) => void }) {
   const buyerName = buyer.displayName ?? buyer.registeredName;
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Pressable
+      onPress={() => onOpenBuyer?.(buyer.id)}
+      {...(Platform.OS === 'web' ? { onHoverIn: () => setHovered(true), onHoverOut: () => setHovered(false) } : null)}
+      style={[styles.sidebarBuyerRow, buyerRowHoverTransitionOnWeb, hovered ? styles.sidebarBuyerRowHovered : null]}
+    >
+      <AvatarChip label={initials(buyerName)} size={32} />
+      <Text style={[styles.sidebarBuyerName, hovered ? styles.sidebarBuyerNameHovered : null]}>{buyerName}</Text>
+      <VerifiedTierTag tier={buyer.credibility.tier} />
+    </Pressable>
+  );
+}
+
+function ScopeSidebarCard({
+  requirement,
+  buyer,
+  onOpenBuyer,
+}: {
+  requirement: Requirement;
+  buyer: Business;
+  onOpenBuyer?: (businessId: BusinessId) => void;
+}) {
   return (
     <View style={styles.sidebarCard}>
       <SectionLabel>What you are pricing</SectionLabel>
       <Text style={styles.sidebarTitle}>{requirement.title}</Text>
 
-      <View style={styles.sidebarBuyerRow}>
-        <Text style={styles.sidebarBuyerName}>{buyerName}</Text>
-        <VerifiedTierTag tier={buyer.credibility.tier} />
-      </View>
+      <BuyerIdentityRow buyer={buyer} onOpenBuyer={onOpenBuyer} />
 
       <View style={styles.sidebarFacts}>
         <FactBlock label="Indicative budget" value={formatBudget(requirement.budgetMin, requirement.budgetMax)} />
@@ -462,8 +485,8 @@ function ClosingBanner({ requirement }: { requirement: Requirement }) {
       <View style={styles.closingDivider} />
       <View style={styles.closingNote}>
         <Text style={styles.closingNoteText}>
-          Nothing you enter here is visible to the buyer or to any other business until closing. You can withdraw
-          and resubmit until then.
+          Your price stays private until closing. The buyer can't see it. Other businesses can't either. You can
+          withdraw and send a new price any time before then.
         </Text>
       </View>
     </View>
@@ -600,45 +623,62 @@ function TermsSection({ requirement, st }: { requirement: Requirement; st: FormS
   );
 }
 
-function NotesAttachmentsSection({ st }: { st: FormState }) {
+function NotesAttachmentsSection({ st, isWide }: { st: FormState; isWide: boolean }) {
+  const notes = (
+    <>
+      <Text style={styles.fieldLabel}>Notes to the buyer</Text>
+      <Text style={styles.fieldCaption}>
+        Inclusions, exclusions, assumptions, or anything that explains your price. Read only after closing.
+      </Text>
+      <TextInput
+        value={st.note}
+        onChangeText={st.setNote}
+        multiline
+        numberOfLines={5}
+        placeholder="e.g. Shop fabrication at our Cabuyao plant, erection sequenced in two phases so the east racking bay stays live."
+        placeholderTextColor={color.inkFaint}
+        style={styles.noteInput}
+      />
+      <Text style={styles.noteCount}>{st.note.length} characters</Text>
+    </>
+  );
+
+  const attachments = (
+    <>
+      <Text style={styles.fieldLabel}>Attachments</Text>
+      <Text style={styles.fieldCaption}>
+        Method statements, bills of quantities, certificates, past work. Sealed with the rest of your quotation.
+      </Text>
+      <View style={styles.filesRow}>
+        {st.files.map((f) => (
+          <View key={f.id} style={styles.fileChip}>
+            <Text style={styles.fileChipName} numberOfLines={1}>{f.filename}</Text>
+            <Pressable onPress={() => st.removeFile(f.id)} hitSlop={8}>
+              <XGlyph tone={color.inkFaint} />
+            </Pressable>
+          </View>
+        ))}
+        <AddDashedButton label="Add file" onPress={st.addFile} />
+      </View>
+    </>
+  );
+
   return (
     <View style={styles.card}>
       <StepLabel n="03" label="Notes and attachments" />
 
-      <View>
-        <Text style={styles.fieldLabel}>Notes to the buyer</Text>
-        <Text style={styles.fieldCaption}>
-          Inclusions, exclusions, assumptions, or anything that explains your price. Read only after closing.
-        </Text>
-        <TextInput
-          value={st.note}
-          onChangeText={st.setNote}
-          multiline
-          numberOfLines={5}
-          placeholder="e.g. Shop fabrication at our Cabuyao plant, erection sequenced in two phases so the east racking bay stays live."
-          placeholderTextColor={color.inkFaint}
-          style={styles.noteInput}
-        />
-        <Text style={styles.noteCount}>{st.note.length} characters</Text>
-      </View>
-
-      <View style={styles.dividedTop}>
-        <Text style={styles.fieldLabel}>Attachments</Text>
-        <Text style={styles.fieldCaption}>
-          Method statements, bills of quantities, certificates, past work. Sealed with the rest of your quotation.
-        </Text>
-        <View style={styles.filesRow}>
-          {st.files.map((f) => (
-            <View key={f.id} style={styles.fileChip}>
-              <Text style={styles.fileChipName} numberOfLines={1}>{f.filename}</Text>
-              <Pressable onPress={() => st.removeFile(f.id)} hitSlop={8}>
-                <XGlyph tone={color.inkFaint} />
-              </Pressable>
-            </View>
-          ))}
-          <AddDashedButton label="Add file" onPress={st.addFile} />
+      {isWide ? (
+        <View style={styles.notesAttachmentsRow}>
+          <View style={styles.notesAttachmentsCol}>{notes}</View>
+          <View style={styles.notesAttachmentsDivider} />
+          <View style={styles.notesAttachmentsCol}>{attachments}</View>
         </View>
-      </View>
+      ) : (
+        <>
+          <View>{notes}</View>
+          <View style={styles.dividedTop}>{attachments}</View>
+        </>
+      )}
     </View>
   );
 }
@@ -659,14 +699,14 @@ function SealSection({
 
       <View style={{ gap: space.md, marginTop: space.md }}>
         <AckCheckbox checked={st.ack1} onToggle={() => st.setAck1((v) => !v)}>
-          I understand that once sealed, nobody — not the buyer, not any other business quoting, and not Trustlink
-          staff — can read this quotation until{' '}
+          Once I seal this, no one can read it. Not the buyer. Not any other business quoting. Not Trustlink staff.
+          It stays locked until{' '}
           <Text style={styles.ackBold}>{formatDateTime(requirement.closingAt)}</Text>, when every quotation opens at
           the same moment.
         </AckCheckbox>
         <AckCheckbox checked={st.ack2} onToggle={() => st.setAck2((v) => !v)}>
-          I may withdraw this quotation at any time before closing, and the withdrawal will be recorded. After
-          closing it cannot be withdrawn, changed, or priced again.
+          I can withdraw this quotation any time before closing. We will record the withdrawal. After closing, I
+          can't withdraw it, change it, or send a new price.
         </AckCheckbox>
       </View>
 
@@ -687,6 +727,13 @@ function SealSection({
 const stickyOnWeb: ViewStyle =
   Platform.OS === 'web' ? ({ position: 'sticky', top: space.xxl } as unknown as ViewStyle) : {};
 
+/** Native has no hover state to transition, so this is a no-op there — same escape hatch
+ *  as stickyOnWeb above. */
+const buyerRowHoverTransitionOnWeb: ViewStyle =
+  Platform.OS === 'web'
+    ? ({ transitionProperty: 'background-color', transitionDuration: '150ms', transitionTimingFunction: 'ease-out' } as unknown as ViewStyle)
+    : {};
+
 function FormScreen(props: FormProps) {
   const { requirement, buyer } = props;
   const st = useQuotationForm(requirement, props.onSubmit);
@@ -698,7 +745,7 @@ function FormScreen(props: FormProps) {
       <ClosingBanner requirement={requirement} />
       <PriceSection requirement={requirement} st={st} />
       <TermsSection requirement={requirement} st={st} />
-      <NotesAttachmentsSection st={st} />
+      <NotesAttachmentsSection st={st} isWide={isWide} />
       <SealSection requirement={requirement} st={st} onSaveDraft={props.onSaveDraft} />
     </>
   );
@@ -709,7 +756,7 @@ function FormScreen(props: FormProps) {
         <View style={styles.page}>
           <Breadcrumb requirement={requirement} onBack={props.onBack} />
           <TitleBlock requirement={requirement} buyer={buyer} />
-          <ScopeSidebarCard requirement={requirement} buyer={buyer} />
+          <ScopeSidebarCard requirement={requirement} buyer={buyer} onOpenBuyer={props.onOpenBuyer} />
           <View style={{ gap: space.lg }}>{sections}</View>
         </View>
       </ScrollView>
@@ -724,7 +771,7 @@ function FormScreen(props: FormProps) {
         <View style={styles.columnsWide}>
           <View style={styles.mainColumn}>{sections}</View>
           <View style={[styles.sideColumn, stickyOnWeb]}>
-            <ScopeSidebarCard requirement={requirement} buyer={buyer} />
+            <ScopeSidebarCard requirement={requirement} buyer={buyer} onOpenBuyer={props.onOpenBuyer} />
           </View>
         </View>
       </View>
@@ -977,7 +1024,7 @@ const styles = StyleSheet.create({
   scrollContent: { alignItems: 'center', paddingVertical: space.xxl, paddingBottom: space.section },
 
   page: { width: '100%', maxWidth: layout.maxWidth, paddingHorizontal: layout.screenPadding, gap: space.lg },
-  pageWide: { width: '100%', maxWidth: layout.maxWidthWide, paddingHorizontal: layout.screenPadding, gap: space.lg },
+  pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, paddingHorizontal: layout.screenPadding, gap: space.lg },
   receiptPage: { width: '100%', maxWidth: RECEIPT_MAX_WIDTH, paddingHorizontal: layout.screenPadding, gap: space.lg },
 
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
@@ -1010,11 +1057,12 @@ const styles = StyleSheet.create({
     color: color.inkFaint,
   },
   stepLabel: {
-    fontFamily: font.mono,
-    fontSize: fontSize.micro,
+    fontFamily: font.monoMedium,
+    fontSize: fontSize.sm,
+    lineHeight: lineHeight.sm,
     letterSpacing: letterSpacing.label,
     textTransform: 'uppercase',
-    color: color.inkFaint,
+    color: color.ink,
   },
   stepLabelPrimary: { color: color.primary },
 
@@ -1072,6 +1120,9 @@ const styles = StyleSheet.create({
   dividedTop: { marginTop: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },
 
   /* notes and attachments */
+  notesAttachmentsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  notesAttachmentsCol: { flex: 1, minWidth: 0 },
+  notesAttachmentsDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.borderFaint },
   noteInput: { marginTop: space.sm, borderWidth: 1, borderColor: color.border, borderRadius: radius.lg, padding: space.md, fontFamily: font.body, fontSize: fontSize.base, lineHeight: lineHeight.base, color: color.ink, textAlignVertical: 'top' },
   noteCount: { marginTop: space.xs, textAlign: 'right', fontFamily: font.body, fontSize: fontSize.sm, color: color.inkFaint },
   filesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.md },
@@ -1100,8 +1151,19 @@ const styles = StyleSheet.create({
   /* sidebar */
   sidebarCard: { ...elevation.cardRaised, borderRadius: radius.xl, backgroundColor: color.surface, padding: space.lg, gap: space.md },
   sidebarTitle: { fontFamily: font.display, fontSize: fontSize.md, lineHeight: lineHeight.md, letterSpacing: letterSpacing.tight, color: color.ink },
-  sidebarBuyerRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
+  sidebarBuyerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    flexWrap: 'wrap',
+    marginHorizontal: -space.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+    borderRadius: radius.lg,
+  },
+  sidebarBuyerRowHovered: { backgroundColor: color.surfaceSunken },
   sidebarBuyerName: { fontFamily: font.display, fontSize: fontSize.sm, color: color.ink },
+  sidebarBuyerNameHovered: { color: color.primary },
   verifiedTag: { flexDirection: 'row', alignItems: 'center' },
   verifiedTagLabel: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.primary },
   sidebarFacts: { gap: space.md, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.borderFaint },

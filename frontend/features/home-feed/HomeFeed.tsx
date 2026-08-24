@@ -13,7 +13,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  TextInput,
   Animated,
   StyleSheet,
   Platform,
@@ -31,12 +30,11 @@ import {
   layout,
   breakpoint,
 } from '../../components/ui/tokens';
+import { AvatarChip, initials } from '../../components/ui/AvatarChip';
 import type {
   Business,
   BusinessId,
   Requirement,
-  Alert,
-  AlertType,
   MessageThread,
   ISODateTime,
   TrustTier,
@@ -57,7 +55,6 @@ export interface HomeFeedProps {
   requirementBuyers: Record<BusinessId, FeedBuyer>;
   myRequirements: Requirement[];
   recentlyClosed: Requirement[];
-  alerts: Alert[];
   messageThreads: MessageThread[];
   onSubmitQuotation?: (requirementId: string) => void;
   onPostRequirement?: () => void;
@@ -84,13 +81,6 @@ function formatBudget(min: number | null, max: number | null): string {
   if (min !== null) return `From ${formatPHP(min)}`;
   if (max !== null) return `Up to ${formatPHP(max)}`;
   return 'Not specified';
-}
-
-function initials(name: string): string {
-  const words = name.split(' ').filter(Boolean);
-  const first = words[0]?.[0] ?? '';
-  const second = words[1]?.[0] ?? '';
-  return (first + second).toUpperCase();
 }
 
 function timeAgoWords(iso: ISODateTime, now: number): string {
@@ -148,25 +138,6 @@ function requirementStatusLabel(status: RequirementStatus): string {
   }
 }
 
-function alertTypeLabel(type: AlertType): string {
-  switch (type) {
-    case 'REQUIREMENT_CLOSING': return 'Requirement closing';
-    case 'QUOTATION_RECEIVED': return 'Quotation received';
-    case 'DECISION': return 'Decision';
-    case 'VERIFICATION': return 'Verification';
-  }
-}
-
-/** Presentation, not data — derived from type, never stored. */
-function alertActionLabel(type: AlertType): string {
-  switch (type) {
-    case 'REQUIREMENT_CLOSING': return 'Review quotations';
-    case 'QUOTATION_RECEIVED': return 'View quotation';
-    case 'DECISION': return 'Open requirement';
-    case 'VERIFICATION': return 'View details';
-  }
-}
-
 function tierLabel(tier: TrustTier | null): string {
   return tier === null ? 'Unrated' : `Tier ${tier}`;
 }
@@ -210,19 +181,6 @@ function matchReason(buyerCity: string, viewer: Business): string {
 }
 
 /* ─── Small building blocks ─────────────────────────── */
-
-function AvatarChip({ label, size = 32, dark = true }: { label: string; size?: number; dark?: boolean }) {
-  return (
-    <View
-      style={[
-        styles.avatarChip,
-        { width: size, height: size, borderRadius: size >= 40 ? radius.lg : radius.md, backgroundColor: dark ? color.ink : color.primary },
-      ]}
-    >
-      <Text style={[styles.avatarChipLabel, { fontSize: size >= 40 ? fontSize.base : fontSize.sm }]}>{label}</Text>
-    </View>
-  );
-}
 
 function VerifiedTag({ verifiedAt }: { verifiedAt: ISODateTime | null }) {
   if (!verifiedAt) return null;
@@ -340,70 +298,6 @@ function PulseDot({ dotColor, pulse }: { dotColor: string; pulse: boolean }) {
 }
 
 /* ─── Header pieces ─────────────────────────────────── */
-
-function Logo() {
-  return (
-    <View style={styles.logoRow}>
-      <View style={styles.logoMark} />
-      <Text style={styles.logoText}>Trustlink</Text>
-    </View>
-  );
-}
-
-function SearchField() {
-  return (
-    <View style={styles.searchField}>
-      <TextInput
-        placeholder="Search requirements or businesses"
-        placeholderTextColor={color.inkFaint}
-        style={styles.searchInput}
-      />
-    </View>
-  );
-}
-
-function AlertRow({ alertItem, now }: { alertItem: Alert; now: number }) {
-  return (
-    <View style={[styles.alertRow, !alertItem.read ? styles.alertRowUnread : null]}>
-      <View style={[styles.alertIcon, { borderColor: alertItem.urgent ? color.dangerBorder : color.primaryBorder }]} />
-      <View style={{ flex: 1, gap: space.xs, minWidth: 0 }}>
-        <View style={styles.alertTopRow}>
-          <Text style={[styles.alertType, { color: alertItem.urgent ? color.danger : color.inkFaint }]}>{alertTypeLabel(alertItem.type)}</Text>
-          <Text style={styles.alertTime}>{timeAgoCompact(alertItem.createdAt, now)}</Text>
-        </View>
-        <Text style={styles.alertTitle}>{alertItem.title}</Text>
-        <Text style={styles.alertDetail}>{alertItem.detail}</Text>
-        <View style={{ marginTop: space.xs }}>
-          <FeedButton label={alertActionLabel(alertItem.type)} variant="outline" onPress={() => {}} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function AlertsPanel({ alerts, now, onClose }: { alerts: Alert[]; now: number; onClose: () => void }) {
-  const unread = alerts.filter((a) => !a.read).length;
-  return (
-    <View style={styles.dropdownPanel}>
-      <View style={styles.dropdownHeader}>
-        <Text style={styles.dropdownTitle}>Alerts</Text>
-        <Text style={styles.dropdownMeta}>{unread} new</Text>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={onClose} hitSlop={8}>
-          <Text style={styles.dropdownClose}>Close</Text>
-        </Pressable>
-      </View>
-      <ScrollView style={{ maxHeight: 420 }}>
-        {alerts.map((a) => (
-          <AlertRow key={a.id} alertItem={a} now={now} />
-        ))}
-      </ScrollView>
-      <Pressable style={styles.dropdownFooter} onPress={() => {}}>
-        <Text style={styles.dropdownFooterLabel}>View all alerts</Text>
-      </Pressable>
-    </View>
-  );
-}
 
 function ThreadRow({ thread, now }: { thread: MessageThread; now: number }) {
   return (
@@ -861,7 +755,6 @@ function useHomeFeed(props: HomeFeedProps) {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [sessionQuoted, setSessionQuoted] = useState<Set<string>>(new Set());
-  const [alertsOpen, setAlertsOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
   const categoryNames = Array.from(new Set(requirements.map((r) => r.category)));
@@ -903,95 +796,21 @@ function useHomeFeed(props: HomeFeedProps) {
     sessionQuoted,
     toggleSave,
     submitQuotation,
-    alertsOpen,
-    setAlertsOpen,
     chatOpen,
     setChatOpen,
     closingSoon,
   };
 }
 
-/* ─── Header (shared by phone + wide) ───────────────── */
-
-function Header({
-  viewer,
-  alerts,
-  now,
-  alertsOpen,
-  onToggleAlerts,
-  showNav,
-}: {
-  viewer: Business;
-  alerts: Alert[];
-  now: number;
-  alertsOpen: boolean;
-  onToggleAlerts: () => void;
-  showNav: boolean;
-}) {
-  const unread = alerts.filter((a) => !a.read).length;
-  const name = viewer.displayName ?? viewer.registeredName;
-  return (
-    <View style={styles.header}>
-      <View style={styles.headerRow}>
-        <Logo />
-        <SearchField />
-        <View style={{ flex: 1 }} />
-        {showNav && (
-          <View style={styles.navRow}>
-            <View style={[styles.navItem, styles.navItemActive]}>
-              <Text style={styles.navLabelActive}>Home</Text>
-            </View>
-            <Pressable style={styles.navItem} onPress={() => {}}>
-              <Text style={styles.navLabel}>My Quotations</Text>
-            </Pressable>
-            <Pressable style={styles.navItem} onPress={() => {}}>
-              <Text style={styles.navLabel}>My Requirements</Text>
-            </Pressable>
-            <Pressable style={styles.navItem} onPress={() => {}}>
-              <Text style={styles.navLabel}>Saved</Text>
-            </Pressable>
-          </View>
-        )}
-        <View>
-          <Pressable style={styles.navItem} onPress={onToggleAlerts}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
-              <Text style={[styles.navLabel, alertsOpen ? styles.navLabelActive : null]}>Alerts</Text>
-              {unread > 0 && (
-                <View style={styles.navBadge}>
-                  <Text style={styles.navBadgeLabel}>{unread}</Text>
-                </View>
-              )}
-            </View>
-          </Pressable>
-          {alertsOpen && (
-            <View style={styles.alertsAnchor}>
-              <AlertsPanel alerts={alerts} now={now} onClose={onToggleAlerts} />
-            </View>
-          )}
-        </View>
-        <View style={styles.profileChip}>
-          <AvatarChip label={initials(name)} size={32} />
-          <View style={{ minWidth: 0 }}>
-            <Text style={styles.profileChipName} numberOfLines={1}>{name}</Text>
-            <Text style={styles.profileChipTier}>Verified · {tierLabel(viewer.credibility.tier)}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-}
-
 /* ─── Phone layout ───────────────────────────────────── */
 
 function PhoneHomeFeed(props: HomeFeedProps) {
   const st = useHomeFeed(props);
-  const { viewer, myRequirements, recentlyClosed, requirementBuyers, alerts, messageThreads } = props;
+  const { viewer, myRequirements, recentlyClosed, requirementBuyers, messageThreads } = props;
 
   return (
     <View style={styles.root}>
     <ScrollView style={styles.root} contentContainerStyle={styles.scrollContent}>
-      <Header viewer={viewer} alerts={alerts} now={st.now} alertsOpen={st.alertsOpen} onToggleAlerts={() => st.setAlertsOpen((v) => !v)} showNav={false} />
-
       <View style={styles.page}>
         <CategoryPills categories={st.categories} active={st.categoryFilter} onSelect={st.setCategoryFilter} />
         <ProfileCard viewer={viewer} />
@@ -1071,21 +890,21 @@ function PhoneHomeFeed(props: HomeFeedProps) {
 }
 
 /* ─── Wide layout ─────────────────────────────────────
- * Reproduces docs/design/Trustlink Home Feed.dc.html's structure directly: sticky
- * header with full nav, left sidebar (profile + stats), centre column (CTA, feed,
- * your requirements, recently closed), right sidebar (closing-soon rail, how-matching),
- * floating messages widget. Capped at layout.maxWidthDashboard (1760) — wider than
- * RequirementDetail.tsx's two-column layout.maxWidthWide, since a three-column dashboard
- * needs the extra room, and wider than the source design's own 1720px so the three
- * columns use more of the window on large screens.
+ * Reproduces docs/design/Trustlink Home Feed.dc.html's structure directly: left sidebar
+ * (profile + stats), centre column (CTA, feed, your requirements, recently closed), right
+ * sidebar (closing-soon rail, how-matching), floating messages widget. Capped at
+ * layout.maxWidthDashboard (1760) — wider than RequirementDetail.tsx's two-column
+ * layout.maxWidthWide, since a three-column dashboard needs the extra room, and wider
+ * than the source design's own 1720px so the three columns use more of the window on
+ * large screens.
  *
+ * The top nav chrome (logo, search, primary nav, account block) lives in AppHeader,
+ * mounted once above this screen by app/_layout.tsx — it is not part of this component.
  * The category filter row lives in page content (not the header), and on web sticks to
- * the top of the viewport just below the fixed header once the user scrolls past it —
- * same stickyOnWeb/native gating as the sidebar below. Its resting position depends on
- * the header's rendered height (which varies with alert badges, nav wrapping, etc.), so
- * both the header and the filter row report their measured heights via onLayout and the
- * filter row's `top` — and the sidebar's, which now docks beneath the filter row too —
- * are derived from those measurements instead of a hardcoded constant. */
+ * the top of this screen's own scroll area — which sits directly below AppHeader — once
+ * the user scrolls past it. Its resting position is 0 (nothing else above it in this
+ * scroll area); the sidebar, which docks beneath the filter row, derives its offset from
+ * the filter row's measured height via onLayout instead of a hardcoded constant. */
 
 const stickyOnWeb: ViewStyle =
   Platform.OS === 'web' ? ({ position: 'sticky', top: 0 } as unknown as ViewStyle) : {};
@@ -1099,23 +918,15 @@ const fixedOnWeb: ViewStyle =
 
 function WideHomeFeed(props: HomeFeedProps) {
   const st = useHomeFeed(props);
-  const { viewer, myRequirements, recentlyClosed, requirementBuyers, alerts, messageThreads } = props;
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const { viewer, myRequirements, recentlyClosed, requirementBuyers, messageThreads } = props;
   const [categoryHeight, setCategoryHeight] = useState(0);
-  const sidebarTop: ViewStyle = Platform.OS === 'web' ? { top: headerHeight + categoryHeight } : {};
+  const sidebarTop: ViewStyle = Platform.OS === 'web' ? { top: categoryHeight } : {};
 
   return (
     <View style={styles.root}>
     <ScrollView style={styles.root} contentContainerStyle={styles.scrollContentWide}>
       <View
-        style={[styles.headerSticky, stickyOnWeb]}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-      >
-        <Header viewer={viewer} alerts={alerts} now={st.now} alertsOpen={st.alertsOpen} onToggleAlerts={() => st.setAlertsOpen((v) => !v)} showNav />
-      </View>
-
-      <View
-        style={[styles.categorySticky, stickyOnWeb, Platform.OS === 'web' ? { top: headerHeight } : {}]}
+        style={[styles.categorySticky, stickyOnWeb]}
         onLayout={(e) => setCategoryHeight(e.nativeEvent.layout.height)}
       >
         <View style={styles.pageWide}>
@@ -1224,34 +1035,13 @@ const styles = StyleSheet.create({
   scrollContentWide: { paddingBottom: space.section },
   page: { width: '100%', paddingHorizontal: layout.screenPadding, gap: space.lg, paddingTop: space.lg },
   pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, marginHorizontal: 'auto', paddingHorizontal: layout.screenPadding },
-  headerSticky: { backgroundColor: color.canvas, borderBottomWidth: 1, borderBottomColor: color.border, zIndex: 50 },
   categorySticky: { backgroundColor: color.canvas, borderBottomWidth: 1, borderBottomColor: color.border, zIndex: 40 },
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl, paddingVertical: space.xl },
   sideColumn: { flex: 1, minWidth: layout.sideColumnMinWidth, maxWidth: 340, gap: space.lg },
   mainColumnWide: { flex: 3, minWidth: 0, gap: space.lg },
   sectionBlock: { gap: space.md, marginTop: space.xl, paddingTop: space.xl, borderTopWidth: 1, borderTopColor: color.border },
 
-  /* header */
-  header: { width: '100%', maxWidth: layout.maxWidthDashboard, marginHorizontal: 'auto', paddingHorizontal: layout.screenPadding, paddingVertical: space.md, backgroundColor: color.canvas },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  logoMark: { width: 18, height: 18, borderRadius: radius.pill, borderWidth: 1.5, borderColor: color.primary },
-  logoText: { fontFamily: font.display, fontSize: fontSize.base, color: color.ink },
-  searchField: { flex: 1, minWidth: 140, maxWidth: 340, backgroundColor: color.surfaceSunken, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm },
-  searchInput: { fontFamily: font.body, fontSize: fontSize.sm, color: color.ink },
-  navRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  navItem: { paddingHorizontal: space.sm, paddingVertical: space.sm, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  navItemActive: { borderBottomColor: color.ink },
-  navLabel: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
-  navLabelActive: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.ink },
-  navBadge: { backgroundColor: color.primary, borderRadius: radius.pill, paddingHorizontal: space.xs, paddingVertical: 1 },
-  navBadgeLabel: { fontFamily: font.mono, fontSize: 10, color: color.onPrimary },
-  profileChip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minWidth: 0 },
-  profileChipName: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.ink },
-  profileChipTier: { fontFamily: font.mono, fontSize: 10, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.primary },
-
-  /* dropdown panels (alerts / chat) */
-  alertsAnchor: { position: 'absolute', top: 44, right: 0, zIndex: 70 },
+  /* dropdown panel (chat) */
   dropdownPanel: { width: 340, maxWidth: 340, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderRadius: radius.xl, overflow: 'hidden' },
   dropdownHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderBottomWidth: 1, borderBottomColor: color.border },
   dropdownTitle: { fontFamily: font.display, fontSize: fontSize.base, color: color.ink },
@@ -1260,14 +1050,8 @@ const styles = StyleSheet.create({
   dropdownFooter: { alignItems: 'center', padding: space.md },
   dropdownFooterLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.primary },
 
-  alertRow: { flexDirection: 'row', gap: space.md, padding: space.md, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
-  alertRowUnread: { backgroundColor: color.primaryFaint },
-  alertIcon: { width: 30, height: 30, borderRadius: radius.md, borderWidth: 1 },
   alertTopRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
-  alertType: { flex: 1, fontFamily: font.mono, fontSize: 9.5, letterSpacing: letterSpacing.label, textTransform: 'uppercase' },
   alertTime: { fontFamily: font.mono, fontSize: fontSize.micro, color: color.inkFaint },
-  alertTitle: { fontFamily: font.bodySemi, fontSize: fontSize.sm },
-  alertDetail: { fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
 
   threadRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
   threadName: { flex: 1, fontSize: fontSize.sm, color: color.ink },
@@ -1350,8 +1134,6 @@ const styles = StyleSheet.create({
   buyerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: color.surfaceSunken, borderRadius: radius.lg, padding: space.md },
   buyerNameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   buyerName: { fontFamily: font.bodySemi, fontSize: fontSize.base, color: color.ink },
-  avatarChip: { alignItems: 'center', justifyContent: 'center' },
-  avatarChipLabel: { fontFamily: font.display, color: color.canvas },
   verifiedTag: { flexDirection: 'row', alignItems: 'center' },
   verifiedTagLabel: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.primary },
   tierTag: { borderWidth: 1, borderColor: color.border, borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 2 },

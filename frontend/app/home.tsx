@@ -5,7 +5,6 @@ import {
   mockRequirementBuyers,
   mockMyRequirements,
   mockRecentlyClosed,
-  mockAlerts,
   mockMessageThreads,
 } from '../features/home-feed/mock';
 
@@ -17,7 +16,6 @@ export default function HomeRoute() {
       requirementBuyers={mockRequirementBuyers}
       myRequirements={mockMyRequirements}
       recentlyClosed={mockRecentlyClosed}
-      alerts={mockAlerts}
       messageThreads={mockMessageThreads}
     />
   );
