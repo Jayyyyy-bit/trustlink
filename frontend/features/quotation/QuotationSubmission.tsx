@@ -19,6 +19,7 @@ import {
   TextInput,
   StyleSheet,
   Platform,
+  Linking,
   useWindowDimensions,
 } from 'react-native';
 import type { ViewStyle } from 'react-native';
@@ -328,6 +329,22 @@ function BuyerIdentityRow({ buyer, onOpenBuyer }: { buyer: Business; onOpenBuyer
   );
 }
 
+function AttachmentLink({ attachment }: { attachment: Attachment }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Pressable
+      onPress={() => Linking.openURL(attachment.uri)}
+      {...(Platform.OS === 'web' ? { onHoverIn: () => setHovered(true), onHoverOut: () => setHovered(false) } : null)}
+      style={buyerRowHoverTransitionOnWeb}
+      hitSlop={4}
+    >
+      <Text style={[styles.sidebarFileLink, hovered ? styles.sidebarFileLinkHovered : null]} numberOfLines={1}>
+        {attachment.filename}
+      </Text>
+    </Pressable>
+  );
+}
+
 function ScopeSidebarCard({
   requirement,
   buyer,
@@ -338,6 +355,8 @@ function ScopeSidebarCard({
   onOpenBuyer?: (businessId: BusinessId) => void;
 }) {
   const [showSpec, setShowSpec] = useState(false);
+  const [showScope, setShowScope] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   return (
     <View style={styles.sidebarCard}>
       <SectionLabel>What you are pricing</SectionLabel>
@@ -353,7 +372,10 @@ function ScopeSidebarCard({
 
       <View style={styles.sidebarDivided}>
         <SectionLabel>Scope</SectionLabel>
-        <Text style={styles.sidebarScopeText} numberOfLines={6}>{requirement.scope}</Text>
+        <Text style={styles.sidebarScopeText} numberOfLines={showScope ? undefined : 2}>{requirement.scope}</Text>
+        <Pressable onPress={() => setShowScope((v) => !v)} hitSlop={4}>
+          <Text style={styles.sidebarMoreLink}>{showScope ? 'Less' : 'More'}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.sidebarDivided}>
@@ -375,12 +397,17 @@ function ScopeSidebarCard({
 
       {requirement.attachments.length > 0 && (
         <View style={styles.sidebarDivided}>
-          <SectionLabel>Buyer attachments</SectionLabel>
-          <View style={{ gap: space.sm, marginTop: space.sm }}>
-            {requirement.attachments.map((a) => (
-              <Text key={a.id} style={styles.sidebarFileLink} numberOfLines={1}>{a.filename}</Text>
-            ))}
-          </View>
+          <Pressable onPress={() => setShowAttachments((v) => !v)} style={styles.specDisclosureRow} hitSlop={4}>
+            <SectionLabel>Buyer attachments</SectionLabel>
+            <ChevronGlyph open={showAttachments} />
+          </Pressable>
+          {showAttachments && (
+            <View style={{ gap: space.sm, marginTop: space.sm }}>
+              {requirement.attachments.map((a) => (
+                <AttachmentLink key={a.id} attachment={a} />
+              ))}
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -402,7 +429,7 @@ const PAYMENT_TERM_OPTIONS = ['50 / 50', '30 / 60 / 10', '20 / 70 / 10', '100% o
 
 function useQuotationForm(requirement: Requirement, onSubmit?: (input: QuotationDraftInput) => void) {
   const [priceMode, setPriceMode] = useState<PriceMode>('LINES');
-  const [items, setItems] = useState<LineItemDraft[]>([{ id: 'l1', desc: '', qty: '1', unit: '0' }]);
+  const [items, setItems] = useState<LineItemDraft[]>([]);
   const [totalOnly, setTotalOnly] = useState('');
   const [lead, setLead] = useState('6');
   const [validity, setValidity] = useState(30);
@@ -501,22 +528,15 @@ function TitleBlock({ requirement, buyer }: { requirement: Requirement; buyer: B
 function ClosingBanner({ requirement }: { requirement: Requirement }) {
   const { label, closed, urgent } = useCountdown(requirement.closingAt);
   return (
-    <View style={[styles.card, styles.closingBanner]}>
-      <View style={{ minWidth: 170, gap: space.xs }}>
-        <SectionLabel>{closed ? 'Closed' : 'Closes in'}</SectionLabel>
-        <View style={styles.closingCountdownRow}>
-          <View style={[styles.closingDot, { backgroundColor: urgent ? color.danger : color.ink }]} />
-          <Text style={[styles.closingCountdown, urgent ? styles.closingCountdownUrgent : null]}>{label}</Text>
-        </View>
-        <Text style={styles.mutedSmall}>Closes {formatDateTime(requirement.closingAt)}</Text>
-      </View>
-      <View style={styles.closingDivider} />
-      <View style={styles.closingNote}>
-        <Text style={styles.closingNoteText}>
-          Your price stays private until closing. The buyer can't see it. Other businesses can't either. You can
-          withdraw and send a new price any time before then.
-        </Text>
-      </View>
+    <View style={styles.closingBanner}>
+      <View style={[styles.closingDot, { backgroundColor: urgent ? color.danger : color.ink }]} />
+      <Text style={[styles.closingCountdown, urgent ? styles.closingCountdownUrgent : null]}>
+        {closed ? 'Closed' : `Closes in ${label}`}
+      </Text>
+      <Text style={styles.closingNoteText}>
+        · Closes {formatDateTime(requirement.closingAt)} · Stays private until then — buyer and other businesses
+        can't see it; withdraw and resend any time before closing.
+      </Text>
     </View>
   );
 }
@@ -535,47 +555,56 @@ function PriceSection({ requirement, st }: { requirement: Requirement; st: FormS
 
       {st.priceMode === 'LINES' ? (
         <View style={styles.lineItemsBox}>
-          <View style={styles.lineItemsHeaderRow}>
-            <Text style={[styles.lineItemsHeaderLabel, { flex: 2.4 }]}>Description</Text>
-            <Text style={[styles.lineItemsHeaderLabel, { flex: 0.7 }]}>Qty</Text>
-            <Text style={[styles.lineItemsHeaderLabel, { flex: 1 }]}>Unit price</Text>
-            <Text style={[styles.lineItemsHeaderLabel, { flex: 1, textAlign: 'right' }]}>Amount</Text>
-            <View style={{ width: 28 }} />
-          </View>
-          {st.items.map((item) => (
-            <View key={item.id} style={styles.lineItemRow}>
-              <TextInput
-                value={item.desc}
-                onChangeText={(v) => st.patchItem(item.id, 'desc', v)}
-                placeholder="Item description"
-                placeholderTextColor={color.inkFaint}
-                style={[styles.lineItemInput, { flex: 2.4 }]}
-              />
-              <TextInput
-                value={item.qty}
-                onChangeText={(v) => st.patchItem(item.id, 'qty', v)}
-                placeholder="1"
-                placeholderTextColor={color.inkFaint}
-                keyboardType="decimal-pad"
-                style={[styles.lineItemInput, styles.mono, { flex: 0.7 }]}
-              />
-              <TextInput
-                value={item.unit}
-                onChangeText={(v) => st.patchItem(item.id, 'unit', v)}
-                placeholder="0"
-                placeholderTextColor={color.inkFaint}
-                keyboardType="decimal-pad"
-                style={[styles.lineItemInput, styles.mono, { flex: 1 }]}
-              />
-              <Text style={[styles.lineItemAmount, { flex: 1 }]}>{formatPHP(num(item.qty) * num(item.unit))}</Text>
-              <Pressable onPress={() => st.removeItem(item.id)} style={styles.lineItemRemove} hitSlop={8}>
-                <XGlyph tone={color.inkFaint} />
-              </Pressable>
+          {st.items.length === 0 ? (
+            <View style={styles.lineItemEmptyRow}>
+              <Text style={styles.lineItemEmptyText}>No line items yet</Text>
+              <AddDashedButton label="Add line item" onPress={st.addItem} prominent />
             </View>
-          ))}
-          <View style={{ marginTop: space.sm }}>
-            <AddDashedButton label="Add line item" onPress={st.addItem} prominent />
-          </View>
+          ) : (
+            <>
+              <View style={styles.lineItemsHeaderRow}>
+                <Text style={[styles.lineItemsHeaderLabel, { flex: 2.4 }]}>Description</Text>
+                <Text style={[styles.lineItemsHeaderLabel, { flex: 0.7 }]}>Qty</Text>
+                <Text style={[styles.lineItemsHeaderLabel, { flex: 1 }]}>Unit price</Text>
+                <Text style={[styles.lineItemsHeaderLabel, { flex: 1, textAlign: 'right' }]}>Amount</Text>
+                <View style={{ width: 28 }} />
+              </View>
+              {st.items.map((item) => (
+                <View key={item.id} style={styles.lineItemRow}>
+                  <TextInput
+                    value={item.desc}
+                    onChangeText={(v) => st.patchItem(item.id, 'desc', v)}
+                    placeholder="Item description"
+                    placeholderTextColor={color.inkFaint}
+                    style={[styles.lineItemInput, { flex: 2.4 }]}
+                  />
+                  <TextInput
+                    value={item.qty}
+                    onChangeText={(v) => st.patchItem(item.id, 'qty', v)}
+                    placeholder="1"
+                    placeholderTextColor={color.inkFaint}
+                    keyboardType="decimal-pad"
+                    style={[styles.lineItemInput, styles.mono, { flex: 0.7 }]}
+                  />
+                  <TextInput
+                    value={item.unit}
+                    onChangeText={(v) => st.patchItem(item.id, 'unit', v)}
+                    placeholder="0"
+                    placeholderTextColor={color.inkFaint}
+                    keyboardType="decimal-pad"
+                    style={[styles.lineItemInput, styles.mono, { flex: 1 }]}
+                  />
+                  <Text style={[styles.lineItemAmount, { flex: 1 }]}>{formatPHP(num(item.qty) * num(item.unit))}</Text>
+                  <Pressable onPress={() => st.removeItem(item.id)} style={styles.lineItemRemove} hitSlop={8}>
+                    <XGlyph tone={color.inkFaint} />
+                  </Pressable>
+                </View>
+              ))}
+              <View style={{ marginTop: space.sm, marginHorizontal: space.sm, marginBottom: space.sm }}>
+                <AddDashedButton label="Add line item" onPress={st.addItem} prominent />
+              </View>
+            </>
+          )}
         </View>
       ) : (
         <View style={styles.totalOnlyBox}>
@@ -610,8 +639,8 @@ function TermsSection({ requirement, st }: { requirement: Requirement; st: FormS
 
       <View style={styles.termsGrid}>
         <View style={styles.termsGridItem}>
-          <Text style={styles.fieldLabel}>Lead time to completion</Text>
-          <Text style={styles.fieldCaption}>From award to handover on site.</Text>
+          <Text style={styles.fieldLabel}>How long will the work take?</Text>
+          <Text style={styles.fieldCaption}>Counted from the day you're awarded, not from today.</Text>
           <View style={styles.leadField}>
             <TextInput
               value={st.lead}
@@ -627,8 +656,8 @@ function TermsSection({ requirement, st }: { requirement: Requirement; st: FormS
         </View>
 
         <View style={styles.termsGridItem}>
-          <Text style={styles.fieldLabel}>Validity period</Text>
-          <Text style={styles.fieldCaption}>How long this price holds.</Text>
+          <Text style={styles.fieldLabel}>How long is this price good for?</Text>
+          <Text style={styles.fieldCaption}>After that, the buyer would need to ask you for a new price.</Text>
           <View style={styles.pillGroupWrap}>
             {VALIDITY_OPTIONS.map((v) => (
               <Pill key={v} label={`${v} days`} active={st.validity === v} onPress={() => st.setValidity(v)} />
@@ -727,14 +756,11 @@ function SealSection({
 
       <View style={{ gap: space.sm, marginTop: space.sm }}>
         <AckCheckbox checked={st.ack1} onToggle={() => st.setAck1((v) => !v)}>
-          Once I seal this, no one can read it. Not the buyer. Not any other business quoting. Not Trustlink staff.
-          It stays locked until{' '}
-          <Text style={styles.ackBold}>{formatDateTime(requirement.closingAt)}</Text>, when every quotation opens at
-          the same moment.
+          Sealed from the buyer, other bidders, and Trustlink staff until{' '}
+          <Text style={styles.ackBold}>{formatDateTime(requirement.closingAt)}</Text>, when all quotations open.
         </AckCheckbox>
         <AckCheckbox checked={st.ack2} onToggle={() => st.setAck2((v) => !v)}>
-          I can withdraw this quotation any time before closing. We will record the withdrawal. After closing, I
-          can't withdraw it, change it, or send a new price.
+          Withdraw anytime before closing — it's recorded. After closing, no withdrawing, changing, or new prices.
         </AckCheckbox>
       </View>
 
@@ -1049,7 +1075,7 @@ export default function QuotationSubmission(props: QuotationSubmissionProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
-  scrollContent: { alignItems: 'center', paddingVertical: space.lg, paddingBottom: space.xxl },
+  scrollContent: { alignItems: 'center', paddingVertical: space.lg },
 
   page: { width: '100%', maxWidth: layout.maxWidth, paddingHorizontal: layout.screenPadding, gap: space.md },
   pageWide: { width: '100%', maxWidth: layout.maxWidthDashboard, paddingHorizontal: layout.screenPadding, gap: space.md },
@@ -1113,14 +1139,11 @@ const styles = StyleSheet.create({
   segmentLabelActive: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.onPrimary },
 
   /* closing banner */
-  closingBanner: { flexDirection: 'row', alignItems: 'center', gap: space.lg, flexWrap: 'wrap', paddingVertical: space.sm, paddingHorizontal: space.lg, backgroundColor: color.primaryFaint, borderColor: color.primaryBorder },
-  closingCountdownRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  closingBanner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   closingDot: { width: 7, height: 7, borderRadius: radius.pill },
   closingCountdown: { fontFamily: font.display, fontSize: fontSize.md, letterSpacing: letterSpacing.tight, color: color.ink },
   closingCountdownUrgent: { color: color.danger },
-  closingDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.border, minHeight: 30 },
-  closingNote: { flex: 1, minWidth: 220 },
-  closingNoteText: { fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
+  closingNoteText: { flex: 1, minWidth: 220, fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
 
   /* line items */
   lineItemsBox: { borderWidth: 1, borderColor: color.borderFaint, borderRadius: radius.lg, overflow: 'hidden' },
@@ -1130,6 +1153,8 @@ const styles = StyleSheet.create({
   lineItemInput: { minWidth: 0, borderWidth: 1, borderColor: 'transparent', borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: space.xs, fontFamily: font.body, fontSize: fontSize.sm, color: color.ink },
   lineItemAmount: { fontFamily: font.monoMedium, fontSize: fontSize.sm, textAlign: 'right', color: color.ink },
   lineItemRemove: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
+  lineItemEmptyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap', padding: space.sm },
+  lineItemEmptyText: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkFaint },
 
   addDashed: { alignSelf: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderColor: color.border, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm },
   addDashedLabel: { fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.inkMuted },
@@ -1209,6 +1234,7 @@ const styles = StyleSheet.create({
   factValue: { marginTop: space.xs, fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.ink },
   sidebarDivided: { paddingTop: space.sm, borderTopWidth: 1, borderTopColor: color.borderFaint },
   sidebarScopeText: { marginTop: space.sm, fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
+  sidebarMoreLink: { marginTop: space.xs, fontFamily: font.bodyMedium, fontSize: fontSize.sm, color: color.primary },
   specDisclosureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   specTable: { marginTop: space.sm, borderWidth: 1, borderColor: color.borderFaint, borderRadius: radius.lg, overflow: 'hidden' },
   specRow: { padding: space.sm, borderBottomWidth: 1, borderBottomColor: color.borderFaint },
@@ -1216,6 +1242,7 @@ const styles = StyleSheet.create({
   specKey: { fontFamily: font.mono, fontSize: fontSize.micro, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.inkFaint },
   specValue: { marginTop: space.xs, fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted },
   sidebarFileLink: { fontFamily: font.body, fontSize: fontSize.sm, color: color.inkMuted },
+  sidebarFileLinkHovered: { color: color.primary },
 
   /* receipt hero */
   receiptHero: { alignItems: 'center', gap: space.md, textAlign: 'center' } as ViewStyle,
