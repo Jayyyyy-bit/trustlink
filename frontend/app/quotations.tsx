@@ -15,7 +15,7 @@ export default function MyQuotationsRoute() {
       buyers={mockBuyers}
       onBack={() => router.back()}
       onOpenRequirement={() => router.push('/requirement')}
-      onResubmit={() => router.push('/quotation')}
+      onResubmit={() => router.push('/submit-quotation')}
       onWithdraw={(quotationId) => {
         // Ledger recording is server-side. This mock stands in for that response — it
         // only flips local state so the withdrawn row moves group immediately.
