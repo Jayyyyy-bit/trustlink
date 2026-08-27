@@ -6,6 +6,7 @@ import {
   mockMyRequirements,
   mockRecentlyClosed,
   mockMessageThreads,
+  mockMessagesByThread,
 } from '../features/home-feed/mock';
 
 export default function HomeRoute() {
@@ -17,6 +18,7 @@ export default function HomeRoute() {
       myRequirements={mockMyRequirements}
       recentlyClosed={mockRecentlyClosed}
       messageThreads={mockMessageThreads}
+      messagesByThread={mockMessagesByThread}
     />
   );
 }
