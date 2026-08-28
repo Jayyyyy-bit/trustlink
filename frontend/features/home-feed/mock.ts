@@ -5,7 +5,7 @@
 // feed's "closing soon" / "posted X ago" framing stays correct whenever this is run,
 // rather than drifting stale against a hardcoded calendar date.
 
-import type { Business, Requirement, Alert, MessageThread } from '../../lib/types';
+import type { Business, Requirement, Alert, MessageThread, Message } from '../../lib/types';
 
 function hoursFromNow(h: number): string {
   return new Date(Date.now() + h * 3600_000).toISOString();
@@ -344,6 +344,11 @@ export const mockRecentlyClosed: Requirement[] = [
   }),
 ];
 mockRecentlyClosed[0].status = 'AWARDED';
+// Awarded to the viewer (Santiago Metal Works) — the one recently-closed listing the
+// viewer was actually the winning respondent on, which is what opens mockMessageThreads'
+// thread-bayan-builders below. The other three are other businesses' outcomes, shown for
+// market visibility only — the viewer was never a party to them, so no thread exists.
+mockRecentlyClosed[0].awardedQuotationId = 'q-4770-santiago';
 mockRecentlyClosed[1].status = 'AWARDED';
 mockRecentlyClosed[2].status = 'CLOSED_NO_AWARD';
 mockRecentlyClosed[3].status = 'AWARDED';
@@ -359,11 +364,49 @@ export const mockAlerts: Alert[] = [
   { id: 'alert-6', type: 'VERIFICATION', title: 'Trust Tier increased to Tier 2', detail: 'Santiago Metal Works · based on verified documents and 6 awarded requirements', createdAt: hoursFromNow(-144), urgent: false, read: true },
 ];
 
-/* ─── Message threads ───────────────────────────────── */
+/* ─── Message threads ─────────────────────────────────
+ * A thread exists only once a requirement is awarded, between the buyer and the awarded
+ * respondent — see the note on MessageThread. Every entry below traces to a requirement in
+ * this file that is actually status 'AWARDED' with the viewer on one side of that award:
+ * thread-coastal-freight is the viewer's own posted requirement (RQ-4688, viewer as buyer,
+ * awardedQuotationId 'q-mock-awarded' from mockMyRequirements above); thread-bayan-builders
+ * is a requirement the viewer won as respondent (RQ-4770, awardedQuotationId
+ * 'q-4770-santiago' from mockRecentlyClosed above). No thread references an OPEN
+ * requirement — there is nothing to negotiate before an award exists. */
 
 export const mockMessageThreads: MessageThread[] = [
-  { id: 'thread-1', counterpartyId: 'biz-ramos', counterpartyName: 'Ramos Construction Supply', requirementRef: 'RQ-4821', lastMessagePreview: 'Can you deliver the first batch by the 18th?', lastMessageAt: hoursFromNow(-1 / 15), unread: true },
-  { id: 'thread-2', counterpartyId: 'biz-vertex', counterpartyName: 'Vertex Builders Inc.', requirementRef: 'RQ-4815', lastMessagePreview: 'Received your quotation — reviewing with our engineer.', lastMessageAt: hoursFromNow(-2), unread: true },
-  { id: 'thread-3', counterpartyId: 'biz-bayan-builders', counterpartyName: 'Bayan Builders Supply', requirementRef: 'RQ-4770', lastMessagePreview: 'Awarded. Please send the sales invoice.', lastMessageAt: hoursFromNow(-24), unread: true },
-  { id: 'thread-4', counterpartyId: 'biz-sunrise', counterpartyName: 'Sunrise Realty Development', requirementRef: 'RQ-4809', lastMessagePreview: 'Thanks, we will get back to you next week.', lastMessageAt: hoursFromNow(-72), unread: false },
+  {
+    id: 'thread-coastal-freight',
+    requirementId: 'rq-4688',
+    requirementRef: 'RQ-4688',
+    awardedQuotationId: 'q-mock-awarded',
+    counterpartyId: 'biz-coastal-freight',
+    counterpartyName: 'Coastal Freight Rentals',
+    lastMessagePreview: "7:00 AM works on our end. I'll send the driver's contact once confirmed.",
+    lastMessageAt: hoursFromNow(-26),
+    unread: false,
+  },
+  {
+    id: 'thread-bayan-builders',
+    requirementId: 'rq-4770',
+    requirementRef: 'RQ-4770',
+    awardedQuotationId: 'q-4770-santiago',
+    counterpartyId: 'biz-bayan-builders',
+    counterpartyName: 'Bayan Builders Supply',
+    lastMessagePreview: 'Awarded. Please send the sales invoice when you get a chance.',
+    lastMessageAt: hoursFromNow(-1 / 15),
+    unread: true,
+  },
 ];
+
+export const mockMessagesByThread: Record<string, Message[]> = {
+  'thread-coastal-freight': [
+    { id: 'msg-cf-1', threadId: 'thread-coastal-freight', senderId: 'biz-coastal-freight', body: 'Thank you for the award — we can mobilize the truck starting Monday.', sentAt: hoursFromNow(-30), read: true },
+    { id: 'msg-cf-2', threadId: 'thread-coastal-freight', senderId: 'biz-santiago', body: 'Great, please confirm the exact pickup time.', sentAt: hoursFromNow(-28), read: true },
+    { id: 'msg-cf-3', threadId: 'thread-coastal-freight', senderId: 'biz-coastal-freight', body: "7:00 AM works on our end. I'll send the driver's contact once confirmed.", sentAt: hoursFromNow(-26), read: true },
+  ],
+  'thread-bayan-builders': [
+    { id: 'msg-bb-1', threadId: 'thread-bayan-builders', senderId: 'biz-bayan-builders', body: 'Congratulations — you were awarded the roof truss job. Looking forward to working with you.', sentAt: hoursFromNow(-1), read: true },
+    { id: 'msg-bb-2', threadId: 'thread-bayan-builders', senderId: 'biz-bayan-builders', body: 'Awarded. Please send the sales invoice when you get a chance.', sentAt: hoursFromNow(-1 / 15), read: false },
+  ],
+};

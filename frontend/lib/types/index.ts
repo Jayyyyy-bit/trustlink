@@ -176,14 +176,30 @@ export interface Alert {
 
 /* ─── Messaging ─────────────────────────────────────── */
 
+/** A thread exists only once a requirement is awarded, and only between the buyer and the
+ *  respondent that requirement was awarded to — requirementId and awardedQuotationId are
+ *  what a thread is for, not incidental metadata. Nothing before that award can create one;
+ *  the sealed quotation process is not negotiable outside it. */
 export interface MessageThread {
   id: string;
+  requirementId: string;
+  requirementRef: RequirementRef;
+  awardedQuotationId: string;
   counterpartyId: BusinessId;
   counterpartyName: string;
-  requirementRef: RequirementRef;
   lastMessagePreview: string;
   lastMessageAt: ISODateTime;
   unread: boolean;
+}
+
+/** Plain text only — no attachments. Documents belong to the quotation, not the thread. */
+export interface Message {
+  id: string;
+  threadId: string;
+  senderId: BusinessId;
+  body: string;
+  sentAt: ISODateTime;
+  read: boolean;
 }
 
 /* ─── Screen state unions ───────────────────────────── */
@@ -197,7 +213,7 @@ export type QuotationSubmissionState = 'FORM' | 'SEALED_RECEIPT';
 
 export type OnboardingStep = 'IDENTITY' | 'OPERATIONS' | 'DOCUMENTS' | 'ARRIVAL';
 
-export type PostRequirementState = 'FORM' | 'REVIEW';
+export type PostRequirementState = 'DETAILS' | 'DELIVERY' | 'CLOSING' | 'REVIEW';
 
 /** Segmented control on the identity step. Decays; never a profile label. */
 export type SignupIntent = 'FIND_SUPPLIERS' | 'FIND_WORK' | 'BOTH';
