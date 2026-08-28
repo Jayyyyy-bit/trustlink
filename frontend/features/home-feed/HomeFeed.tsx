@@ -334,34 +334,42 @@ function ThreadRow({ thread, now, onPress }: { thread: MessageThread; now: numbe
   );
 }
 
-/* ─── Messages dock: collapsed bar → sliding thread list → side-by-side conversations ──
+/* ─── Messages dock: a list card plus independent conversation windows ──
  * Web only — same Platform.OS-gated check the sticky sidebar's stickyOnWeb/fixedOnWeb use
  * elsewhere in this file, just returning null outright instead of swapping a style, since a
- * multi-panel floating dock has no sensible native/phone equivalent. Fixed to the bottom-
- * right on web via fixedOnWeb.
+ * floating dock has no sensible native/phone equivalent. Fixed to the bottom-right on web
+ * via fixedOnWeb.
  *
- * Three kinds of thing live in one horizontal row, all bottom-aligned, right edge pinned via
- * the container's own `right` offset so the row grows leftward as panels open: any open
- * conversation panels (oldest furthest left), then the thread list panel, then the dock bar
- * itself, which never moves. Opening a thread does not replace the list — it adds a new
- * conversation panel beside it, and both stay mounted and visible. Every panel (list and
- * each conversation) carries its own collapse and close controls: collapse toggles a
- * conversation panel down to a header-only strip that stays in the row (no closing
- * animation, no data loss — its message list keeps composing in the background), while
- * close plays the same slide-down exit the open animation used, then actually removes it
- * from state once the animation finishes (SlideDock's `onClosed`, mirroring the deferred-
- * unmount technique Onboarding.tsx/PostRequirement.tsx use for their outgoing step — collapse
- * has no such deferred step since the panel never leaves the row). The list's own collapse
- * and close controls both just hide the list (there is only one, and the bar is already its
- * minimized form, so a third distinct state would be redundant) — reopen it from the bar.
+ * Every item in the dock — the thread-list card and each open conversation — is built the
+ * same way: a fixed-height header pinned to the bottom edge, with a content pane above it
+ * whose `height` alone is what GrowPanel animates between 0 (collapsed: the card *is* just
+ * its header) and DOCK_OPEN_HEIGHT (expanded). Nothing ever slides or repositions; only that
+ * height changes, so a header never moves relative to the bottom edge it's docked to.
+ *
+ * They lay out left-to-right in one row, right edge pinned via the container's own `right`
+ * offset so the row grows leftward as windows open: conversation windows first (oldest
+ * furthest left, newest nearest the list), then the thread-list card last, which is why its
+ * position never shifts as windows come and go. Selecting a thread from the list does not
+ * touch the list itself — it opens a new conversation window beside it (or re-expands one
+ * already open), and both stay visible at once; multiple conversations can be open
+ * side by side.
+ *
+ * Each conversation window carries its own collapse and close controls, independent of the
+ * list card's: collapse just re-targets its GrowPanel height back to 0 without unmounting
+ * (no data loss — the draft and scroll position are still there when it re-expands), while
+ * close does the same height animation and then, once it finishes, actually drops the
+ * window from state via GrowPanel's `onClosed` — the same deferred-unmount idea
+ * Onboarding.tsx/PostRequirement.tsx use for their outgoing step. `onClosed` also fires after
+ * an ordinary collapse, so the callers below only act on it when a close was actually in
+ * flight.
  *
  * Threads are never created here — the only way one exists is passed in via `threads`,
  * which by construction (see MessageThread's doc comment) only ever holds threads a buyer
  * and their awarded respondent already share. Plain text only: the composer is a single
  * TextInput, no attachment affordance — documents live on the quotation, not the thread. */
 
-const DOCK_SLIDE_DISTANCE = 480; // px a panel travels below the viewport bottom while hidden
-const DOCK_SLIDE_MS = 220;
+const DOCK_OPEN_HEIGHT = 400;
+const DOCK_ANIM_MS = 220;
 
 function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
   return (
@@ -374,8 +382,8 @@ function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
   );
 }
 
-function MinimizeGlyph() {
-  return <View style={styles.minimizeGlyph} />;
+function TrustlinkMark() {
+  return <View style={styles.dockMark} />;
 }
 
 function CloseGlyph() {
@@ -391,12 +399,12 @@ function ChevronGlyph({ up }: { up: boolean }) {
   return <View style={[styles.dockChevron, up ? styles.dockChevronUp : null]} />;
 }
 
-/** Handles the entrance/exit slide for one panel. Always mounts hidden (translateY starts
- *  at DOCK_SLIDE_DISTANCE) and animates to 0 on `open`, whether that's the very first render
- *  or a later reopen — so every appearance, not just the first, slides up. On `open` turning
- *  false it plays the same slide in reverse and only then calls `onClosed`, so the parent
- *  can defer actually removing the panel from state until the exit animation is done. */
-function SlideDock({
+/** Animates only `height`, between 0 and DOCK_OPEN_HEIGHT — no translateY. overflow:hidden
+ *  clips the pane away at height 0, which is what makes the header below look like a plain
+ *  closed bar. Children stay mounted throughout (collapsing never unmounts), so `onClosed`
+ *  — fired once an animation *into* the closed state finishes — doesn't distinguish a
+ *  deliberate close from an ordinary collapse; callers that care check their own state. */
+function GrowPanel({
   open,
   onClosed,
   style,
@@ -407,86 +415,89 @@ function SlideDock({
   style?: ViewStyle;
   children: ReactNode;
 }) {
-  const translateY = useRef(new Animated.Value(DOCK_SLIDE_DISTANCE)).current;
-  const [mounted, setMounted] = useState(open);
-
+  const height = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (open) {
-      setMounted(true);
-      Animated.timing(translateY, { toValue: 0, duration: DOCK_SLIDE_MS, useNativeDriver: true }).start();
-    } else {
-      Animated.timing(translateY, { toValue: DOCK_SLIDE_DISTANCE, duration: DOCK_SLIDE_MS, useNativeDriver: true }).start(({ finished }) => {
-        if (finished) {
-          setMounted(false);
-          onClosed?.();
-        }
-      });
-    }
-  }, [open, translateY, onClosed]);
-
-  if (!mounted) return null;
-  return <Animated.View style={[style, { transform: [{ translateY }] }]}>{children}</Animated.View>;
+    Animated.timing(height, { toValue: open ? DOCK_OPEN_HEIGHT : 0, duration: DOCK_ANIM_MS, useNativeDriver: false }).start(({ finished }) => {
+      if (finished && !open) onClosed?.();
+    });
+  }, [open, height, onClosed]);
+  return <Animated.View style={[style, { height, overflow: 'hidden' }]}>{children}</Animated.View>;
 }
 
-function ThreadListDockPanel({
+function ThreadListCard({
   threads,
   now,
+  open,
+  onToggleOpen,
   onSelectThread,
-  onCollapse,
+  width,
 }: {
   threads: MessageThread[];
   now: number;
+  open: boolean;
+  onToggleOpen: () => void;
   onSelectThread: (id: string) => void;
-  onCollapse: () => void;
+  width: number;
 }) {
   const unread = threads.filter((t) => t.unread).length;
   return (
-    <View style={styles.dockPanel}>
-      <View style={styles.dockHeader}>
-        <Text style={styles.dockTitle}>Messages</Text>
-        {unread > 0 && <Text style={styles.dockMeta}>{unread} unread</Text>}
+    <View style={[styles.dockPanel, { width }]}>
+      <GrowPanel open={open}>
+        {threads.length === 0 ? (
+          <View style={styles.dockEmpty}>
+            <Text style={styles.dockEmptyText}>
+              No conversations yet. Messaging opens once a requirement you&apos;re part of is awarded.
+            </Text>
+          </View>
+        ) : (
+          <ScrollView style={styles.dockScroll}>
+            {threads.map((t) => (
+              <ThreadRow key={t.id} thread={t} now={now} onPress={() => onSelectThread(t.id)} />
+            ))}
+          </ScrollView>
+        )}
+      </GrowPanel>
+
+      <Pressable onPress={onToggleOpen} style={[styles.dockBar, open ? styles.dockBarOpen : null]}>
+        <TrustlinkMark />
+        <Text style={styles.dockBarLabel}>Messages</Text>
         <View style={{ flex: 1 }} />
-        <View style={styles.dockHeaderControls}>
-          <Pressable onPress={onCollapse} hitSlop={8}><MinimizeGlyph /></Pressable>
-          <Pressable onPress={onCollapse} hitSlop={8}><CloseGlyph /></Pressable>
-        </View>
-      </View>
-      {threads.length === 0 ? (
-        <View style={styles.dockEmpty}>
-          <Text style={styles.dockEmptyText}>
-            No conversations yet. Messaging opens once a requirement you&apos;re part of is awarded.
-          </Text>
-        </View>
-      ) : (
-        <ScrollView style={{ maxHeight: 360 }}>
-          {threads.map((t) => (
-            <ThreadRow key={t.id} thread={t} now={now} onPress={() => onSelectThread(t.id)} />
-          ))}
-        </ScrollView>
-      )}
+        {unread > 0 && (
+          <View style={styles.chatBadge}>
+            <Text style={styles.chatBadgeLabel}>{unread}</Text>
+          </View>
+        )}
+      </Pressable>
     </View>
   );
 }
 
-function ConversationDockPanel({
+function ConversationWindow({
   thread,
   messages,
   viewerId,
   collapsed,
+  closing,
   onToggleCollapse,
   onClose,
+  onClosed,
   onSend,
+  width,
 }: {
   thread: MessageThread;
   messages: Message[];
   viewerId: BusinessId;
   collapsed: boolean;
+  closing: boolean;
   onToggleCollapse: () => void;
   onClose: () => void;
+  onClosed: () => void;
   onSend: (body: string) => void;
+  width: number;
 }) {
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<ScrollView>(null);
+  const open = !collapsed && !closing;
 
   const handleSend = () => {
     const body = draft.trim();
@@ -496,25 +507,14 @@ function ConversationDockPanel({
   };
 
   return (
-    <View style={styles.dockPanel}>
-      <View style={styles.dockHeader}>
-        <Pressable onPress={onToggleCollapse} hitSlop={8} style={styles.dockHeaderPress}>
-          <ChevronGlyph up={collapsed} />
-          <View style={{ minWidth: 0 }}>
-            <Text style={styles.dockTitle} numberOfLines={1}>{thread.counterpartyName}</Text>
-            <Text style={styles.dockMeta}>{thread.requirementRef}</Text>
-          </View>
-        </Pressable>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={onClose} hitSlop={8}>
-          <CloseGlyph />
-        </Pressable>
-      </View>
-      {!collapsed && (
-        <>
+    <View style={[styles.dockPanel, { width }]}>
+      {/* onClosed only wired while an actual close is in flight — an ordinary collapse
+       *  also animates height to 0, but must not trigger the deferred unmount below. */}
+      <GrowPanel open={open} onClosed={closing ? onClosed : undefined}>
+        <View style={{ flex: 1 }}>
           <ScrollView
             ref={scrollRef}
-            style={{ maxHeight: 360 }}
+            style={styles.dockScroll}
             contentContainerStyle={styles.bubbleList}
             onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           >
@@ -536,8 +536,22 @@ function ConversationDockPanel({
               <Text style={styles.composerSendLabel}>Send</Text>
             </Pressable>
           </View>
-        </>
-      )}
+        </View>
+      </GrowPanel>
+
+      <View style={[styles.dockBar, open ? styles.dockBarOpen : null]}>
+        <Pressable onPress={onToggleCollapse} hitSlop={8} style={styles.dockHeaderPress}>
+          <ChevronGlyph up={open} />
+          <View style={{ minWidth: 0 }}>
+            <Text style={styles.dockBarLabel} numberOfLines={1}>{thread.counterpartyName}</Text>
+            <Text style={styles.dockMeta}>{thread.requirementRef}</Text>
+          </View>
+        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Pressable onPress={onClose} hitSlop={8}>
+          <CloseGlyph />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -555,27 +569,18 @@ function ChatWidget({
 }) {
   const [listOpen, setListOpen] = useState(false);
   const [openThreadIds, setOpenThreadIds] = useState<string[]>([]);
-  const [closingThreadIds, setClosingThreadIds] = useState<Set<string>>(new Set());
   const [collapsedThreadIds, setCollapsedThreadIds] = useState<Set<string>>(new Set());
+  const [closingThreadIds, setClosingThreadIds] = useState<Set<string>>(new Set());
   const [sentByThread, setSentByThread] = useState<Record<string, Message[]>>({});
   const { width } = useWindowDimensions();
   const panelWidth = Math.min(320, width - 40);
-  const barWidth = Math.min(260, width - 40);
 
-  const unread = threads.filter((t) => t.unread).length;
-
-  const toggleBar = () => setListOpen((v) => !v);
-  const collapseList = () => setListOpen(false);
+  const toggleList = () => setListOpen((v) => !v);
 
   const openThread = (id: string) => {
     setOpenThreadIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setClosingThreadIds((prev) => (prev.has(id) ? new Set([...prev].filter((x) => x !== id)) : prev));
     setCollapsedThreadIds((prev) => (prev.has(id) ? new Set([...prev].filter((x) => x !== id)) : prev));
-  };
-  const requestCloseThread = (id: string) => setClosingThreadIds((prev) => new Set(prev).add(id));
-  const finalizeCloseThread = (id: string) => {
-    setOpenThreadIds((prev) => prev.filter((t) => t !== id));
-    setClosingThreadIds((prev) => new Set([...prev].filter((x) => x !== id)));
+    setClosingThreadIds((prev) => (prev.has(id) ? new Set([...prev].filter((x) => x !== id)) : prev));
   };
   const toggleCollapseThread = (id: string) =>
     setCollapsedThreadIds((prev) => {
@@ -583,6 +588,11 @@ function ChatWidget({
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  const requestCloseThread = (id: string) => setClosingThreadIds((prev) => new Set(prev).add(id));
+  const finalizeCloseThread = (id: string) => {
+    setOpenThreadIds((prev) => prev.filter((t) => t !== id));
+    setClosingThreadIds((prev) => new Set([...prev].filter((x) => x !== id)));
+  };
 
   const sendMessage = (threadId: string, body: string) => {
     const message: Message = {
@@ -604,32 +614,30 @@ function ChatWidget({
         const thread = threads.find((t) => t.id === id);
         if (!thread) return null;
         return (
-          <SlideDock key={id} open={!closingThreadIds.has(id)} onClosed={() => finalizeCloseThread(id)} style={{ width: panelWidth }}>
-            <ConversationDockPanel
-              thread={thread}
-              messages={[...(messagesByThread[id] ?? []), ...(sentByThread[id] ?? [])]}
-              viewerId={viewerId}
-              collapsed={collapsedThreadIds.has(id)}
-              onToggleCollapse={() => toggleCollapseThread(id)}
-              onClose={() => requestCloseThread(id)}
-              onSend={(body) => sendMessage(id, body)}
-            />
-          </SlideDock>
+          <ConversationWindow
+            key={id}
+            thread={thread}
+            messages={[...(messagesByThread[id] ?? []), ...(sentByThread[id] ?? [])]}
+            viewerId={viewerId}
+            collapsed={collapsedThreadIds.has(id)}
+            closing={closingThreadIds.has(id)}
+            onToggleCollapse={() => toggleCollapseThread(id)}
+            onClose={() => requestCloseThread(id)}
+            onClosed={() => finalizeCloseThread(id)}
+            onSend={(body) => sendMessage(id, body)}
+            width={panelWidth}
+          />
         );
       })}
 
-      <SlideDock open={listOpen} style={{ width: panelWidth }}>
-        <ThreadListDockPanel threads={threads} now={now} onSelectThread={openThread} onCollapse={collapseList} />
-      </SlideDock>
-
-      <Pressable onPress={toggleBar} style={[styles.chatBar, { width: barWidth }]}>
-        <Text style={styles.chatBarLabel}>Messages</Text>
-        {unread > 0 && (
-          <View style={styles.chatBadge}>
-            <Text style={styles.chatBadgeLabel}>{unread}</Text>
-          </View>
-        )}
-      </Pressable>
+      <ThreadListCard
+        threads={threads}
+        now={now}
+        open={listOpen}
+        onToggleOpen={toggleList}
+        onSelectThread={openThread}
+        width={panelWidth}
+      />
     </View>
   );
 }
@@ -1304,25 +1312,15 @@ const styles = StyleSheet.create({
   mainColumnWide: { flex: 3, minWidth: 0, gap: space.lg },
   sectionBlock: { gap: space.md, marginTop: space.xl, paddingTop: space.xl, borderTopWidth: 1, borderTopColor: color.border },
 
-  /* messages dock panel — card treatment (border + surface, no shadow), flush against the
-   * dock bar below it rather than floating above it with a gap */
+  /* messages dock — one bordered card, flush to the bottom-right corner. dockPanel is the
+   * whole card (content pane + bar); its rounded top corners read correctly whether the
+   * pane above is open or collapsed to nothing, since the bar's own edges never carry a
+   * radius of their own */
   dockPanel: { backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, overflow: 'hidden' },
-  dockHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderBottomWidth: 1, borderBottomColor: color.border },
-  dockTitle: { fontFamily: font.display, fontSize: fontSize.base, color: color.ink },
+  dockScroll: { flex: 1 },
   dockMeta: { fontFamily: font.mono, fontSize: 10, letterSpacing: letterSpacing.label, textTransform: 'uppercase', color: color.inkFaint },
   dockEmpty: { padding: space.xl },
   dockEmptyText: { fontFamily: font.body, fontSize: fontSize.sm, lineHeight: lineHeight.sm, color: color.inkMuted, textAlign: 'center' },
-  dockHeaderPress: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1, minWidth: 0 },
-  dockHeaderControls: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-
-  /* header glyphs — minimize dash, × close, and a rotate-driven chevron for a collapsed
-   * conversation panel, same border-corner technique QuotationSubmission.tsx's own
-   * chevronGlyph/chevronGlyphOpen pair uses */
-  minimizeGlyph: { width: 10, height: 1.4, borderRadius: 1, backgroundColor: color.inkMuted },
-  closeGlyphBox: { width: 10, height: 10, alignItems: 'center', justifyContent: 'center' },
-  closeGlyphBar: { position: 'absolute', width: 10, height: 1.4, borderRadius: 1, backgroundColor: color.inkMuted },
-  dockChevron: { width: 6, height: 6, borderRightWidth: 1.4, borderBottomWidth: 1.4, borderColor: color.inkMuted, transform: [{ rotate: '45deg' }] },
-  dockChevronUp: { transform: [{ rotate: '-135deg' }] },
 
   alertTopRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   alertTime: { fontFamily: font.mono, fontSize: fontSize.micro, color: color.inkFaint },
@@ -1347,15 +1345,27 @@ const styles = StyleSheet.create({
   composerSend: { backgroundColor: color.primary, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm },
   composerSendLabel: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.onPrimary },
 
-  /* dock row — right edge pinned via `right`, grows leftward as panels open; every item
-   * (conversation panels, the list panel, the bar) shares the bottom edge */
+  /* dock row — right edge pinned via `right`, grows leftward as conversation windows open;
+   * every item (conversation windows, then the list card) shares the bottom edge */
   chatWidget: { right: space.xl, bottom: 0, flexDirection: 'row', alignItems: 'flex-end', gap: space.md, zIndex: 80 },
-  /* dock bar — flush to the bottom-right corner, card treatment (not a solid-fill pill),
-   * wide enough to read as a proper bar rather than a chip */
-  chatBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, backgroundColor: color.surface, borderWidth: 1, borderColor: color.border, borderBottomWidth: 0, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, paddingHorizontal: space.lg, paddingVertical: space.md },
-  chatBarLabel: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.ink },
+  /* dock bar/header — fixed-height row pinned to the bottom of dockPanel, its top border
+   * only drawn while the pane above it is expanded so it reads as one divider, not a
+   * doubled edge */
+  dockBar: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingVertical: space.md },
+  dockBarOpen: { borderTopWidth: 1, borderTopColor: color.border },
+  dockBarLabel: { fontFamily: font.bodySemi, fontSize: fontSize.sm, color: color.ink },
+  dockMark: { width: 14, height: 14, borderRadius: radius.pill, borderWidth: 1.5, borderColor: color.primary },
+  dockHeaderPress: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1, minWidth: 0 },
   chatBadge: { backgroundColor: color.primary, borderRadius: radius.pill, paddingHorizontal: space.xs, paddingVertical: 1, minWidth: 16, alignItems: 'center' },
   chatBadgeLabel: { fontFamily: font.mono, fontSize: fontSize.micro, color: color.onPrimary },
+
+  /* conversation window header glyphs — × close, and a rotate-driven chevron for
+   * collapse/expand, same border-corner technique QuotationSubmission.tsx's own
+   * chevronGlyph/chevronGlyphOpen pair uses */
+  closeGlyphBox: { width: 10, height: 10, alignItems: 'center', justifyContent: 'center' },
+  closeGlyphBar: { position: 'absolute', width: 10, height: 1.4, borderRadius: 1, backgroundColor: color.inkMuted },
+  dockChevron: { width: 6, height: 6, borderRightWidth: 1.4, borderBottomWidth: 1.4, borderColor: color.inkMuted, transform: [{ rotate: '45deg' }] },
+  dockChevronUp: { transform: [{ rotate: '-135deg' }] },
 
   /* category pills */
   categoryRow: { flexDirection: 'row', gap: space.sm, paddingVertical: space.md },
