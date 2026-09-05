@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #FBFAF9; }
+  a { color: #0F0F0E; text-decoration: none; }
+  a:hover { color: #55524D; }
+  ::selection { background: #0F0F0E; color: #FBFAF9; }
+  input, button, textarea { font-family: 'DM Sans', sans-serif; }
+  @media (max-width: 940px) {
+    .tl-cols { flex-direction: column; }
+    .tl-cols > * { flex: 0 0 auto !important; width: 100%; min-width: 0; box-sizing: border-box; }
+    .tl-side { position: static !important; max-width: none !important; }
+  }
+</style>
+</helmet>
+<div style="background:#FBFAF9;color:#0F0F0E;font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;padding-bottom:110px">
+
+  <header style="position:sticky;top:0;z-index:50;background:rgba(251,250,249,0.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(15,15,14,0.1)">
+    <div style="max-width:1720px;margin:0 auto;padding:0 clamp(16px,3vw,56px);height:66px;display:flex;align-items:center;gap:clamp(10px,2vw,32px);min-width:0">
+      <a href="#home" style="display:flex;align-items:center;gap:9px;flex:none">
+        <svg viewBox="0 0 24 24" fill="none" style="width:21px;height:21px" aria-hidden="true"><circle cx="12" cy="12" r="10.2" stroke="#164E78" stroke-width="1.2"></circle><path d="M7.6 12.3l3 3 5.8-6.3" stroke="#164E78" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:500;font-size:17px;letter-spacing:-0.03em">Trustlink</span>
+      </a>
+
+      <label style="flex:1 1 120px;min-width:0;max-width:340px;display:flex;align-items:center;gap:9px;background:rgba(15,15,14,0.05);border:1px solid transparent;border-radius:999px;padding:9px 14px">
+        <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;flex:none;color:rgba(15,15,14,0.45)"><circle cx="7.2" cy="7.2" r="4.6" stroke="currentColor" stroke-width="1.3"></circle><path d="M10.6 10.6L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
+        <input type="text" placeholder="Search requirements or businesses" style="flex:1;min-width:0;background:transparent;border:none;outline:none;font-size:13.5px;color:#0F0F0E">
+      </label>
+
+      <div style="flex:1"></div>
+
+      <nav style="display:flex;align-items:center;gap:2px;min-width:0;flex:0 1 auto">
+        <a href="#home" title="Home" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 clamp(7px,1.1vw,14px);color:rgba(15,15,14,0.55)" style-hover="color:#0F0F0E">
+          <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M4 10.4 12 4l8 6.4V19a1 1 0 0 1-1 1h-4v-5.4H9V20H5a1 1 0 0 1-1-1v-8.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+          <span style="font-size:11.5px;white-space:nowrap">Home</span>
+        </a>
+        <a href="#quotations" title="My Quotations" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 clamp(7px,1.1vw,14px);color:rgba(15,15,14,0.55)" style-hover="color:#0F0F0E">
+          <span style="position:relative;display:flex">
+            <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M6 3.5h8.5L19 8v12.5H6a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M8.5 12h7M8.5 15.5h4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg>
+            <span style="position:absolute;top:-5px;left:12px;font-family:'DM Mono',monospace;font-size:9.5px;line-height:1;background:#164E78;color:#FBFAF9;border:1.5px solid #FBFAF9;border-radius:999px;padding:2px 4px">3</span>
+          </span>
+          <span style="font-size:11.5px;white-space:nowrap">My Quotations</span>
+        </a>
+        <a href="#requirements" title="My Requirements" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 clamp(7px,1.1vw,14px);color:rgba(15,15,14,0.55)" style-hover="color:#0F0F0E">
+          <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M4.5 5.5h15v13.5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V5.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M8 3v4.5M16 3v4.5M4.5 10h15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg>
+          <span style="font-size:11.5px;white-space:nowrap">My Requirements</span>
+        </a>
+        <a href="#alerts" title="Alerts" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 clamp(7px,1.1vw,14px);color:rgba(15,15,14,0.55)" style-hover="color:#0F0F0E">
+          <span style="position:relative;display:flex">
+            <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M6.2 9.6a5.8 5.8 0 0 1 11.6 0c0 4 1.3 5.6 1.9 6.2.3.3.1.9-.4.9H4.7c-.5 0-.7-.6-.4-.9.6-.6 1.9-2.2 1.9-6.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M9.8 20a2.4 2.4 0 0 0 4.4 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg>
+            <span style="position:absolute;top:-5px;left:12px;font-family:'DM Mono',monospace;font-size:9.5px;line-height:1;background:#B4331F;color:#FBFAF9;border:1.5px solid #FBFAF9;border-radius:999px;padding:2px 4px">2</span>
+          </span>
+          <span style="font-size:11.5px;white-space:nowrap">Alerts</span>
+        </a>
+
+        <span style="width:1px;height:26px;background:rgba(15,15,14,0.12);margin:0 clamp(6px,1vw,14px)"></span>
+
+        <a href="#profile" style="display:flex;align-items:center;gap:9px;min-width:0;overflow:hidden">
+          <div style="width:32px;height:32px;border-radius:999px;background:#0F0F0E;color:#FBFAF9;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:500;flex:none">SM</div>
+          <div style="line-height:1.25;min-width:0">
+            <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Santiago Metal Works</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:#164E78">Verified · Tier 2</div>
+          </div>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <sc-if value="{{ isVisitor }}" hint-placeholder-val="{{ true }}">
+    <div style="border-bottom:1px solid rgba(15,15,14,0.1);background:rgba(15,15,14,0.025)">
+      <div style="max-width:1360px;margin:0 auto;padding:11px clamp(16px,3vw,44px);display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:rgba(15,15,14,0.5)">
+        <a href="#feed" style="color:rgba(15,15,14,0.5)" style-hover="color:#0F0F0E">Home</a>
+        <span>/</span>
+        <a href="#requirement" style="color:rgba(15,15,14,0.5)" style-hover="color:#0F0F0E">Steel mezzanine platform, 240 sqm</a>
+        <span>/</span>
+        <span style="color:rgba(15,15,14,0.75)">{{ displayName }}</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPreview }}" hint-placeholder-val="{{ false }}">
+    <div style="border-bottom:1px solid rgba(22,78,120,0.22);background:rgba(22,78,120,0.06)">
+      <div style="max-width:1360px;margin:0 auto;padding:13px clamp(16px,3vw,44px);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:8px;color:#164E78">
+          <svg viewBox="0 0 24 24" fill="none" style="width:15px;height:15px;flex:none"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.5"></circle></svg>
+          <span style="font-size:13.5px;font-weight:500">You're viewing your profile as others see it.</span>
+        </span>
+        <span style="flex:1;min-width:8px"></span>
+        <button onClick="{{ goOwner }}" style="display:inline-flex;align-items:center;gap:8px;background:#164E78;border:1px solid #164E78;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;color:#FBFAF9;cursor:pointer;white-space:nowrap" style-hover="opacity:0.88">
+          <svg viewBox="0 0 16 16" fill="none" style="width:11px;height:11px"><path d="M13.5 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span>Back to editing</span>
+        </button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+    <div style="border-bottom:1px solid rgba(15,15,14,0.1);background:rgba(15,15,14,0.025)">
+      <div style="max-width:1360px;margin:0 auto;padding:12px clamp(16px,3vw,44px);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="font-size:13.5px;font-weight:500">Your business profile</span>
+        <span style="font-size:12.5px;color:rgba(15,15,14,0.55)">Verified records and Trustlink activity are fixed.</span>
+        <span style="flex:1;min-width:8px"></span>
+        <button onClick="{{ goPreview }}" style="display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid rgba(15,15,14,0.16);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:500;color:rgba(15,15,14,0.7);cursor:pointer;white-space:nowrap" style-hover="background:rgba(15,15,14,0.05);color:#0F0F0E">
+          <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.5"></circle></svg>
+          <span>Preview public profile</span>
+        </button>
+      </div>
+    </div>
+  </sc-if>
+
+  <div class="tl-cols" style="display:flex;align-items:flex-start;gap:clamp(16px,2vw,24px);max-width:1360px;margin:0 auto;padding:clamp(18px,2.4vw,28px) clamp(16px,3vw,44px) 0">
+
+    <div style="flex:2.4 1 560px;min-width:0;border:1px solid rgba(15,15,14,0.12);border-radius:18px;background:#FFFFFF;overflow:hidden">
+
+      <div style="height:clamp(104px,11vw,140px);background:linear-gradient(115deg,#164E78 0%,#1C5E8E 42%,rgba(22,78,120,0.55) 100%);position:relative">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.10) 0%,rgba(15,15,14,0.10) 100%)"></div>
+        <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ noop }}" title="Change cover" style="position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(251,250,249,0.9);border:1px solid rgba(255,255,255,0.5);border-radius:999px;color:#164E78;cursor:pointer" style-hover="background:#FBFAF9">
+            <svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path></svg>
+          </button>
+        </sc-if>
+      </div>
+
+      <div style="padding:0 clamp(20px,2.4vw,30px) clamp(22px,2.6vw,30px)">
+
+        <div style="width:92px;height:92px;border-radius:22px;background:#0F0F0E;color:#FBFAF9;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:31px;font-weight:500;letter-spacing:-0.02em;border:4px solid #FFFFFF;position:relative;z-index:1;margin-top:-46px">BL</div>
+
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-top:16px">
+          <div style="flex:1 1 340px;min-width:0">
+
+            <sc-if value="{{ editingName }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:480px">
+                <label style="display:block;font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(15,15,14,0.45)">Display name</label>
+                <input type="text" value="{{ nameDraft }}" onChange="{{ onNameInput }}" style="width:100%;box-sizing:border-box;margin-top:8px;background:transparent;border:none;border-bottom:1px solid rgba(22,78,120,0.45);outline:none;padding:5px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:25px;font-weight:500;letter-spacing:-0.03em;color:#0F0F0E">
+                <div style="margin-top:9px;font-size:12.5px;color:rgba(15,15,14,0.5)">Registered name stays <strong style="font-weight:500;color:rgba(15,15,14,0.7)">{{ registeredName }}</strong>.</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:13px">
+                  <button onClick="{{ saveName }}" style="background:#164E78;border:1px solid #164E78;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;color:#FBFAF9;cursor:pointer">Save</button>
+                  <button onClick="{{ cancelEdit }}" style="background:transparent;border:none;padding:0;font-size:13px;font-weight:500;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="color:#0F0F0E">Cancel</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showNameRead }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(25px,2.8vw,32px);font-weight:500;line-height:1.1;letter-spacing:-0.035em;text-wrap:pretty">{{ displayName }}</h1>
+                  <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ startEditName }}" title="Edit display name" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(15,15,14,0.16);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:500;color:rgba(15,15,14,0.6);cursor:pointer" style-hover="border-color:rgba(22,78,120,0.5);color:#164E78">
+                      <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+                      <span>Edit</span>
+                    </button>
+                  </sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+                  <span title="Registration, tax, and permit records verified by Trustlink." style="display:inline-flex;align-items:center;gap:6px;background:rgba(44,110,73,0.09);color:#2C6E49;border-radius:999px;padding:4px 11px;cursor:default">
+                    <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;flex:none"><circle cx="12" cy="12" r="10.2" stroke="currentColor" stroke-width="1.6"></circle><path d="M7.6 12.3l3 3 5.8-6.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <span style="font-size:12.5px;font-weight:500">Verified</span>
+                  </span>
+                  <span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;background:rgba(22,78,120,0.09);color:#164E78;border:1px solid rgba(22,78,120,0.35);border-radius:999px;padding:4px 10px">Tier 3</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-top:11px;font-size:13.5px;color:rgba(15,15,14,0.6)">
+              <span style="white-space:nowrap">Corporation</span>
+              <span style="white-space:nowrap">Transport &amp; Warehousing</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
+                <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;flex:none;color:rgba(15,15,14,0.4)"><path d="M12 21s6.5-6 6.5-11a6.5 6.5 0 1 0-13 0C5.5 15 12 21 12 21Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><circle cx="12" cy="10" r="2.2" stroke="currentColor" stroke-width="1.4"></circle></svg>
+                <span>{{ locationLine }}</span>
+              </span>
+            </div>
+          </div>
+
+          <sc-if value="{{ isPublicView }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none">
+              <sc-if value="{{ messageDisabled }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ noop }}" disabled="disabled" title="{{ messageTitle }}" style="display:inline-flex;align-items:center;gap:9px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.1);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:500;color:rgba(15,15,14,0.35);cursor:not-allowed;white-space:nowrap">
+                  <svg viewBox="0 0 24 24" fill="none" style="width:15px;height:15px"><path d="M4 6.2A1.2 1.2 0 0 1 5.2 5h13.6A1.2 1.2 0 0 1 20 6.2v9.6a1.2 1.2 0 0 1-1.2 1.2H9l-5 3V6.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+                  <span>Message</span>
+                </button>
+              </sc-if>
+              <sc-if value="{{ messageEnabled }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ noop }}" title="{{ messageTitle }}" style="display:inline-flex;align-items:center;gap:9px;background:#164E78;border:1px solid #164E78;border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:500;color:#FBFAF9;cursor:pointer;white-space:nowrap" style-hover="opacity:0.88">
+                  <svg viewBox="0 0 24 24" fill="none" style="width:15px;height:15px"><path d="M4 6.2A1.2 1.2 0 0 1 5.2 5h13.6A1.2 1.2 0 0 1 20 6.2v9.6a1.2 1.2 0 0 1-1.2 1.2H9l-5 3V6.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+                  <span>Message</span>
+                </button>
+              </sc-if>
+              <span style="font-size:11.5px;color:rgba(15,15,14,0.42);max-width:24ch;text-align:right;line-height:1.45">{{ messageNote }}</span>
+            </div>
+          </sc-if>
+        </div>
+
+        <section style="margin-top:clamp(22px,2.6vw,28px);padding-top:clamp(20px,2.4vw,24px);border-top:1px solid rgba(15,15,14,0.1)">
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">{{ doLabel }}</div>
+            <span style="flex:1;min-width:10px"></span>
+            <sc-if value="{{ showCapEdit }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ startEditCaps }}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;font-size:12px;font-weight:500;color:#164E78;cursor:pointer" style-hover="color:#103A5A">
+                <svg viewBox="0 0 24 24" fill="none" style="width:11px;height:11px"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+                <span>Edit capabilities and areas</span>
+              </button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ capsRead }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px">
+              <sc-for list="{{ shownCaps }}" as="c" hint-placeholder-count="3">
+                <a href="#feed" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:rgba(15,15,14,0.8);background:rgba(15,15,14,0.05);border:1px solid rgba(15,15,14,0.09);border-radius:999px;padding:7px 14px" style-hover="background:rgba(22,78,120,0.08);border-color:rgba(22,78,120,0.35);color:#164E78">
+                  <span>{{ c }}</span>
+                  <svg viewBox="0 0 16 16" fill="none" style="width:9px;height:9px;flex:none;opacity:0.5"><path d="M2.5 8h10.5M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </a>
+              </sc-for>
+              <sc-if value="{{ hasMoreCaps }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ toggleCaps }}" style="display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px dashed rgba(15,15,14,0.24);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:500;color:rgba(15,15,14,0.6);cursor:pointer" style-hover="border-color:rgba(22,78,120,0.5);color:#164E78">
+                  <span>{{ capsToggle }}</span>
+                  <svg viewBox="0 0 16 16" fill="none" style="width:10px;height:10px;transform:{{ capsChevron }}"><path d="M3.5 6l4.5 4.5L12.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ editingCaps }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px">
+              <div style="display:flex;align-items:flex-start;gap:9px;background:rgba(22,78,120,0.045);border-radius:12px;padding:12px 14px">
+                <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;flex:none;margin-top:2px;color:#164E78"><circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.5v6M12 7.6v.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+                <div style="font-size:12.5px;line-height:1.55;color:rgba(15,15,14,0.6);max-width:70ch">Capabilities and service areas decide which requirements Trustlink matches and recommends to you.</div>
+              </div>
+
+              <div style="margin-top:16px;font-size:12px;font-weight:500;color:rgba(15,15,14,0.45)">Capabilities</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
+                <sc-for list="{{ capChips }}" as="c" hint-placeholder-count="6">
+                  <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:rgba(15,15,14,0.78);background:rgba(15,15,14,0.05);border-radius:999px;padding:5px 7px 5px 12px">
+                    <span>{{ c.label }}</span>
+                    <button onClick="{{ c.remove }}" title="Remove" style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:rgba(15,15,14,0.07);border:none;border-radius:999px;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="background:rgba(180,51,31,0.12);color:#B4331F">
+                      <svg viewBox="0 0 16 16" fill="none" style="width:9px;height:9px"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+                    </button>
+                  </span>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap">
+                <input type="text" value="{{ newCap }}" onChange="{{ onNewCap }}" placeholder="Add a capability" style="flex:1 1 200px;min-width:0;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:999px;outline:none;padding:8px 14px;font-size:13px;color:#0F0F0E">
+                <button onClick="{{ addCap }}" style="background:transparent;border:1px solid rgba(22,78,120,0.4);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:500;color:#164E78;cursor:pointer" style-hover="background:rgba(22,78,120,0.06)">Add</button>
+              </div>
+
+              <div style="margin-top:18px;font-size:12px;font-weight:500;color:rgba(15,15,14,0.45)">Service areas</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
+                <sc-for list="{{ areaChips }}" as="a" hint-placeholder-count="6">
+                  <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(15,15,14,0.72);border:1px solid rgba(15,15,14,0.14);border-radius:999px;padding:4px 6px 4px 11px">
+                    <span>{{ a.label }}</span>
+                    <button onClick="{{ a.remove }}" title="Remove" style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:rgba(15,15,14,0.07);border:none;border-radius:999px;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="background:rgba(180,51,31,0.12);color:#B4331F">
+                      <svg viewBox="0 0 16 16" fill="none" style="width:9px;height:9px"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+                    </button>
+                  </span>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap">
+                <input type="text" value="{{ newArea }}" onChange="{{ onNewArea }}" placeholder="Add a city or province" style="flex:1 1 200px;min-width:0;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:999px;outline:none;padding:8px 14px;font-size:13px;color:#0F0F0E">
+                <button onClick="{{ addArea }}" style="background:transparent;border:1px solid rgba(22,78,120,0.4);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:500;color:#164E78;cursor:pointer" style-hover="background:rgba(22,78,120,0.06)">Add</button>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:12px;margin-top:18px">
+                <button onClick="{{ saveCaps }}" style="background:#164E78;border:1px solid #164E78;border-radius:999px;padding:9px 17px;font-size:13px;font-weight:500;color:#FBFAF9;cursor:pointer" style-hover="opacity:0.88">Save changes</button>
+                <button onClick="{{ cancelEdit }}" style="background:transparent;border:none;padding:0;font-size:13px;font-weight:500;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="color:#0F0F0E">Cancel</button>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+
+        <section style="margin-top:clamp(22px,2.6vw,28px);padding-top:clamp(20px,2.4vw,24px);border-top:1px solid rgba(15,15,14,0.1)">
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">Trustlink activity</div>
+            <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:rgba(15,15,14,0.42)">
+                <svg viewBox="0 0 24 24" fill="none" style="width:11px;height:11px;flex:none"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6" stroke="currentColor" stroke-width="1.5"></rect><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" stroke="currentColor" stroke-width="1.5"></path></svg>
+                <span>Counted by Trustlink · not editable</span>
+              </span>
+            </sc-if>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:18px 26px;margin-top:16px">
+            <sc-for list="{{ record }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.toggleInfo }}" title="{{ r.info }}" style="position:relative;background:rgba(15,15,14,0.025);border-radius:12px;padding:14px 15px;cursor:default" style-hover="background:rgba(15,15,14,0.045)">
+                <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(30px,3.4vw,38px);font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">{{ r.shown }}</div>
+                <div style="margin-top:8px;font-size:12.5px;line-height:1.4;color:rgba(15,15,14,0.62);max-width:16ch;text-wrap:pretty">{{ r.label }}</div>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:30px;margin-top:12px">
+                  <sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="8">
+                    <span style="flex:1;min-width:0;border-radius:2px;background:{{ b.bg }};height:{{ b.h }};opacity:{{ b.op }}"></span>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ r.infoOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;left:10px;right:10px;bottom:10px;z-index:2;background:#0F0F0E;color:#FBFAF9;border-radius:10px;padding:10px 12px;font-size:11.5px;line-height:1.5;box-shadow:0 8px 24px rgba(15,15,14,0.22)">{{ r.info }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+        </section>
+
+        <section style="margin-top:clamp(22px,2.6vw,28px);padding-top:clamp(20px,2.4vw,24px);border-top:1px solid rgba(15,15,14,0.1)">
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">Open requirements</div>
+            <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(15,15,14,0.4)">{{ openCount }}</span>
+            <span style="flex:1;min-width:10px"></span>
+            <a href="#feed" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#164E78" style-hover="color:#103A5A">
+              <span>View all</span>
+              <svg viewBox="0 0 16 16" fill="none" style="width:11px;height:11px"><path d="M2.5 8h10.5M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </a>
+          </div>
+
+          <div style="display:flex;flex-direction:column;margin-top:6px">
+            <sc-for list="{{ open }}" as="o" hint-placeholder-count="3">
+              <a href="#requirement" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:15px 12px;margin:0 -12px;border-bottom:1px solid rgba(15,15,14,0.08);border-radius:10px" style-hover="background:rgba(15,15,14,0.022)">
+                <div style="flex:1 1 250px;min-width:0">
+                  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                    <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:{{ o.pillFg }}">{{ o.pill }}</span>
+                    <sc-if value="{{ o.showQuoted }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#164E78;border:1px solid rgba(22,78,120,0.35);border-radius:999px;padding:3px 8px">{{ o.quotedLabel }}</span>
+                    </sc-if>
+                  </div>
+                  <div style="margin-top:7px;font-size:15px;font-weight:500;letter-spacing:-0.01em;line-height:1.35;max-width:46ch;text-wrap:pretty">{{ o.title }}</div>
+                  <div style="margin-top:5px;font-size:12.5px;color:rgba(15,15,14,0.5)">{{ o.meta }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;margin-left:auto">
+                  <div style="text-align:right">
+                    <div style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(15,15,14,0.72);white-space:nowrap">{{ o.budget }}</div>
+                    <div style="margin-top:5px;font-size:12.5px;color:{{ o.clockFg }};white-space:nowrap">{{ o.closes }}</div>
+                  </div>
+                  <svg viewBox="0 0 16 16" fill="none" style="width:12px;height:12px;flex:none;color:rgba(15,15,14,0.28)"><path d="M5.5 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </div>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <aside class="tl-side" style="position:sticky;top:82px;flex:1 1 300px;min-width:290px;max-width:352px;border:1px solid rgba(15,15,14,0.12);border-radius:18px;background:#FFFFFF;padding:clamp(18px,2vw,22px) clamp(18px,2vw,22px) clamp(18px,2vw,22px)">
+
+      <div style="display:flex;align-items:center;gap:9px">
+        <svg viewBox="0 0 24 24" fill="none" style="width:17px;height:17px;flex:none;color:#2C6E49"><circle cx="12" cy="12" r="10.2" stroke="currentColor" stroke-width="1.6"></circle><path d="M7.6 12.3l3 3 5.8-6.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:16.5px;font-weight:500;letter-spacing:-0.025em">Verified business</span>
+      </div>
+
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px">
+        <span style="font-size:13px;color:rgba(15,15,14,0.55)">Trust tier</span>
+        <span style="font-size:13.5px;font-weight:500;color:#164E78">Tier 3 · highest</span>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px">
+        <span style="font-size:13px;color:rgba(15,15,14,0.55)">Records checked</span>
+        <span style="font-size:13.5px;font-weight:500">3 Mar 2025</span>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px">
+        <span style="font-size:13px;color:rgba(15,15,14,0.55)">Next re-check</span>
+        <span style="font-size:13.5px;font-weight:500">3 Mar 2027</span>
+      </div>
+
+      <div style="margin-top:13px;font-size:12.5px;line-height:1.6;color:rgba(15,15,14,0.55)">{{ verifyBody }}</div>
+
+      <button onClick="{{ toggleDocs }}" style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:transparent;border:none;padding:0;font-size:13px;font-weight:500;color:#164E78;cursor:pointer" style-hover="color:#103A5A">
+        <span>{{ docsToggle }}</span>
+        <svg viewBox="0 0 16 16" fill="none" style="width:11px;height:11px;transform:{{ docsChevron }}"><path d="M3.5 6l4.5 4.5L12.5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </button>
+
+      <sc-if value="{{ docsOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:13px;background:rgba(44,110,73,0.045);border-radius:12px;padding:13px 14px">
+          <sc-for list="{{ documents }}" as="d" hint-placeholder-count="4">
+            <div>
+              <div style="display:flex;align-items:center;gap:7px">
+                <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;flex:none;color:#2C6E49"><circle cx="12" cy="12" r="10.2" stroke="currentColor" stroke-width="1.6"></circle><path d="M7.6 12.3l3 3 5.8-6.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span style="font-size:12.5px;font-weight:500">{{ d.name }}</span>
+              </div>
+              <div style="margin-top:3px;padding-left:19px;font-family:'DM Mono',monospace;font-size:11.5px;color:rgba(15,15,14,0.55)">{{ d.ref }} · {{ d.checked }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px">
+          <div style="font-size:12.5px;font-weight:500;color:rgba(15,15,14,0.55)">Mayor's permit · optional</div>
+          <div style="margin-top:5px;font-size:12.5px;line-height:1.55;color:rgba(15,15,14,0.5)">A current permit keeps Tier 3 through the next re-check.</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+            <span style="display:inline-flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:11.5px;color:{{ permitFg }}">
+              <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;flex:none"><path d="M7 3.5h7L18 8v12.5H7a.9.9 0 0 1-.9-.9V4.4A.9.9 0 0 1 7 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+              <span>{{ permitName }}</span>
+            </span>
+            <button onClick="{{ uploadPermit }}" style="background:transparent;border:1px solid rgba(22,78,120,0.4);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:500;color:#164E78;cursor:pointer" style-hover="background:rgba(22,78,120,0.06)">{{ permitAction }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="margin-top:19px;padding-top:18px;border-top:1px solid rgba(15,15,14,0.1)">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">Business details</div>
+          <span style="flex:1"></span>
+          <sc-if value="{{ showPlaceEdit }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ startEditPlace }}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;font-size:12px;font-weight:500;color:#164E78;cursor:pointer" style-hover="color:#103A5A">
+              <svg viewBox="0 0 24 24" fill="none" style="width:11px;height:11px"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+              <span>Edit</span>
+            </button>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ placeRead }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
+            <sc-for list="{{ glance }}" as="g" hint-placeholder-count="4">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:rgba(15,15,14,0.55);flex:none">
+                  <sc-if value="{{ g.locked }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 24 24" fill="none" style="width:10px;height:10px;flex:none;color:rgba(15,15,14,0.32)"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6" stroke="currentColor" stroke-width="1.6"></rect><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" stroke="currentColor" stroke-width="1.6"></path></svg>
+                  </sc-if>
+                  <span>{{ g.label }}</span>
+                </span>
+                <span style="font-size:13.5px;font-weight:500;text-align:right">{{ g.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ editingPlace }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px">
+            <label style="display:block;font-size:12px;color:rgba(15,15,14,0.5)">City</label>
+            <input type="text" value="{{ cityDraft }}" onChange="{{ onCity }}" style="width:100%;box-sizing:border-box;margin-top:6px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:10px;outline:none;padding:9px 12px;font-size:13.5px;color:#0F0F0E">
+            <label style="display:block;margin-top:11px;font-size:12px;color:rgba(15,15,14,0.5)">Province</label>
+            <input type="text" value="{{ provinceDraft }}" onChange="{{ onProvince }}" style="width:100%;box-sizing:border-box;margin-top:6px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:10px;outline:none;padding:9px 12px;font-size:13.5px;color:#0F0F0E">
+            <div style="margin-top:11px;font-size:12px;line-height:1.55;color:rgba(15,15,14,0.45)">Registered name, business type, and industry come from your verified record.</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:13px">
+              <button onClick="{{ savePlace }}" style="background:#164E78;border:1px solid #164E78;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;color:#FBFAF9;cursor:pointer">Save</button>
+              <button onClick="{{ cancelEdit }}" style="background:transparent;border:none;padding:0;font-size:13px;font-weight:500;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="color:#0F0F0E">Cancel</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:19px;padding-top:18px;border-top:1px solid rgba(15,15,14,0.1)">
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">Contact person</div>
+            <span style="flex:1"></span>
+            <sc-if value="{{ contactRead }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ startEditContact }}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;font-size:12px;font-weight:500;color:#164E78;cursor:pointer" style-hover="color:#103A5A">
+                <svg viewBox="0 0 24 24" fill="none" style="width:11px;height:11px"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+                <span>Edit</span>
+              </button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ contactRead }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:13px">
+              <div style="font-size:14px;font-weight:500">{{ contactPerson }}</div>
+              <div style="margin-top:4px;font-family:'DM Mono',monospace;font-size:13px;color:rgba(15,15,14,0.65)">{{ mobile }}</div>
+              <div style="margin-top:9px;font-size:12.5px;line-height:1.55;color:rgba(15,15,14,0.5)">Shown to another business only after an award between you.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ editingContact }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:13px">
+              <label style="display:block;font-size:12px;color:rgba(15,15,14,0.5)">Contact person</label>
+              <input type="text" value="{{ contactDraft }}" onChange="{{ onContact }}" style="width:100%;box-sizing:border-box;margin-top:6px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:10px;outline:none;padding:9px 12px;font-size:13.5px;color:#0F0F0E">
+              <label style="display:block;margin-top:11px;font-size:12px;color:rgba(15,15,14,0.5)">Mobile number</label>
+              <input type="text" value="{{ mobileDraft }}" onChange="{{ onMobile }}" style="width:100%;box-sizing:border-box;margin-top:6px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.12);border-radius:10px;outline:none;padding:9px 12px;font-family:'DM Mono',monospace;font-size:13px;color:#0F0F0E">
+              <div style="display:flex;align-items:center;gap:12px;margin-top:13px">
+                <button onClick="{{ saveContact }}" style="background:#164E78;border:1px solid #164E78;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;color:#FBFAF9;cursor:pointer">Save</button>
+                <button onClick="{{ cancelEdit }}" style="background:transparent;border:none;padding:0;font-size:13px;font-weight:500;color:rgba(15,15,14,0.55);cursor:pointer" style-hover="color:#0F0F0E">Cancel</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <div style="margin-top:19px;padding-top:18px;border-top:1px solid rgba(15,15,14,0.1)">
+        <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">{{ operateLabel }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+          <sc-for list="{{ areas }}" as="a" hint-placeholder-count="6">
+            <span style="font-size:12.5px;color:rgba(15,15,14,0.7);border:1px solid rgba(15,15,14,0.14);border-radius:999px;padding:5px 11px">{{ a }}</span>
+          </sc-for>
+        </div>
+        <div style="margin-top:11px;font-size:12.5px;line-height:1.55;color:rgba(15,15,14,0.5)">{{ areaFoot }}</div>
+      </div>
+
+      <div style="margin-top:19px;padding-top:18px;border-top:1px solid rgba(15,15,14,0.1)">
+        <div style="font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(15,15,14,0.72)">Interaction</div>
+        <div style="margin-top:12px;font-size:13px;line-height:1.6;color:rgba(15,15,14,0.65);text-wrap:pretty">{{ contactBody }}</div>
+
+        <sc-if value="{{ isPublicView }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <sc-if value="{{ messageDisabled }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ noop }}" disabled="disabled" title="{{ messageTitle }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;background:rgba(15,15,14,0.04);border:1px solid rgba(15,15,14,0.1);border-radius:999px;padding:11px;font-size:13.5px;font-weight:500;color:rgba(15,15,14,0.35);cursor:not-allowed">
+                <span>Message business</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{ messageEnabled }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ noop }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;background:#164E78;border:1px solid #164E78;border-radius:999px;padding:11px;font-size:13.5px;font-weight:500;color:#FBFAF9;cursor:pointer" style-hover="opacity:0.88">
+                <span>Message business</span>
+              </button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isOwner }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ goPreview }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;margin-top:13px;background:#164E78;border:1px solid #164E78;border-radius:999px;padding:11px;font-size:13.5px;font-weight:500;color:#FBFAF9;cursor:pointer" style-hover="opacity:0.88">
+            <span>Preview public profile</span>
+          </button>
+        </sc-if>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024},&quot;profileState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;VISITOR&quot;,&quot;OWNER&quot;,&quot;PREVIEW&quot;],&quot;default&quot;:&quot;VISITOR&quot;,&quot;tsType&quot;:&quot;BusinessProfileState&quot;,&quot;section&quot;:&quot;Profile state&quot;},&quot;hasAwardBetween&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Profile state&quot;}}">
+const DOCS = [
+  { name: "SEC registration", ref: "CS201408932", checked: "3 Mar 2025" },
+  { name: "BIR certificate", ref: "TIN 008-421-556-000", checked: "3 Mar 2025" },
+  { name: "Mayor's permit", ref: "Valenzuela City 2026", checked: "14 Jan 2026" },
+  { name: "Authorised representative", ref: "R. Bayani", checked: "3 Mar 2025" }
+];
+
+const RECORD = [
+  { value: "14", label: "Requirements posted", info: "14 requirements posted in the last 12 months. 3 are open now.", series: [1, 0, 2, 1, 2, 1, 0, 2, 1, 1, 2, 1] },
+  { value: "11", label: "Requirements awarded", info: "11 of the 11 requirements that closed were awarded to a respondent.", series: [1, 0, 1, 1, 2, 0, 1, 1, 1, 0, 2, 1] },
+  { value: "6", label: "Quotations submitted", info: "6 quotations submitted to other businesses. 2 are still sealed.", series: [0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0] },
+  { value: "4", label: "Quotations awarded", info: "4 of the 6 quotations submitted were awarded.", series: [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0] }
+];
+
+const OPEN = [
+  { title: "Fabrication and installation of steel mezzanine platform, 240 sqm",
+    meta: "Construction & Hardware · Valenzuela City",
+    budget: "\u20B1 420,000 – 520,000", closes: "Closes in 6 days", mine: true, urgent: false },
+  { title: "Repaint and reseal warehouse roof deck, 620 sqm",
+    meta: "Construction & Hardware · Valenzuela City",
+    budget: "\u20B1 350,000 – 400,000", closes: "Closes in 8h 42m", mine: true, urgent: true },
+  { title: "Forklift preventive maintenance, 6 units, annual contract",
+    meta: "Equipment & Machinery · Valenzuela City",
+    budget: "\u20B1 180,000 – 240,000", closes: "Closes in 12 days", mine: false, urgent: false }
+];
+
+const REGISTERED = "Bayan Logistics Corporation";
+
+class Component extends DCLogic {
+  state = {
+    view: null,
+    editing: null,
+    docsOpen: false,
+    displayName: "Bayan Logistics Corp.",
+    capabilities: ["Warehousing", "Freight forwarding", "Cold chain storage", "Last-mile delivery", "Customs brokerage", "Fleet operations"],
+    areas: ["Valenzuela", "Quezon City", "Caloocan", "Malabon", "Bulacan", "Meycauayan"],
+    contactPerson: "Ramon Bayani",
+    mobile: "+63 917 402 8815",
+    city: "Valenzuela City",
+    province: "Metro Manila",
+    permit: "mayors-permit-2026.pdf",
+    capsExpanded: false,
+    countProgress: null,
+    openInfo: null,
+    draft: {}, newCap: "", newArea: ""
+  };
+
+  componentDidMount() {
+    if (typeof requestAnimationFrame !== "function") return;
+    const DURATION = 900;
+    let start = null;
+    const tick = (now) => {
+      if (start === null) start = now;
+      const t = Math.min(1, (now - start) / DURATION);
+      this.setState({ countProgress: 1 - Math.pow(1 - t, 3) });
+      if (t < 1) this._raf = requestAnimationFrame(tick);
+      else this._raf = null;
+    };
+    this._raf = requestAnimationFrame(tick);
+    this._countFallback = setTimeout(() => {
+      if (this.state.countProgress === null || this.state.countProgress < 1) {
+        if (this._raf) cancelAnimationFrame(this._raf);
+        this.setState({ countProgress: 1 });
+      }
+    }, 1600);
+  }
+
+  componentWillUnmount() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    if (this._countFallback) clearTimeout(this._countFallback);
+  }
+
+  view() {
+    return this.state.view || this.props.profileState || "VISITOR";
+  }
+
+  begin(key, draft) {
+    this.setState({ editing: key, draft: draft, newCap: "", newArea: "" });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const view = this.view();
+    const isOwner = view === "OWNER";
+    const isPreview = view === "PREVIEW";
+    const isVisitor = view === "VISITOR";
+    const editing = isOwner ? s.editing : null;
+    const awarded = this.props.hasAwardBetween ?? false;
+    const d = s.draft;
+
+    const setView = (v) => () => { this.setState({ view: v, editing: null }); window.scrollTo(0, 0); };
+    const cap = (editing === "caps" ? (d.capabilities || []) : s.capabilities);
+    const ar = (editing === "caps" ? (d.areas || []) : s.areas);
+
+    return {
+      noop: () => {},
+      isOwner, isPreview, isVisitor,
+      isPublicView: !isOwner,
+      goPreview: setView("PREVIEW"),
+      goOwner: setView("OWNER"),
+
+      displayName: s.displayName,
+      registeredName: REGISTERED,
+      locationLine: s.city + ", " + s.province,
+
+      editingName: editing === "name",
+      showNameRead: editing !== "name",
+      nameDraft: d.displayName || "",
+      onNameInput: (e) => this.setState({ draft: Object.assign({}, this.state.draft, { displayName: e.target.value }) }),
+      startEditName: () => this.begin("name", { displayName: s.displayName }),
+      saveName: () => this.setState({ displayName: (this.state.draft.displayName || "").trim() || this.state.displayName, editing: null }),
+      cancelEdit: () => this.setState({ editing: null, draft: {} }),
+
+      doLabel: isOwner ? "What you do" : "What they do",
+      operateLabel: isOwner ? "Where you operate" : "Where they operate",
+
+      showCapEdit: isOwner && editing !== "caps",
+      capsRead: editing !== "caps",
+      editingCaps: editing === "caps",
+      capabilities: s.capabilities,
+      shownCaps: s.capsExpanded ? s.capabilities : s.capabilities.slice(0, 3),
+      hasMoreCaps: s.capabilities.length > 3,
+      capsToggle: s.capsExpanded ? "Show less" : "+" + (s.capabilities.length - 3) + " more",
+      capsChevron: s.capsExpanded ? "rotate(180deg)" : "rotate(0deg)",
+      toggleCaps: () => this.setState((st) => ({ capsExpanded: !st.capsExpanded })),
+      areas: s.areas,
+      startEditCaps: () => this.begin("caps", { capabilities: s.capabilities.slice(), areas: s.areas.slice() }),
+      capChips: cap.map((c, i) => ({
+        label: c,
+        remove: () => this.setState((st) => ({ draft: Object.assign({}, st.draft, { capabilities: st.draft.capabilities.filter((x, j) => j !== i) }) }))
+      })),
+      areaChips: ar.map((a, i) => ({
+        label: a,
+        remove: () => this.setState((st) => ({ draft: Object.assign({}, st.draft, { areas: st.draft.areas.filter((x, j) => j !== i) }) }))
+      })),
+      newCap: s.newCap,
+      newArea: s.newArea,
+      onNewCap: (e) => this.setState({ newCap: e.target.value }),
+      onNewArea: (e) => this.setState({ newArea: e.target.value }),
+      addCap: () => this.setState((st) => {
+        const v = st.newCap.trim();
+        if (!v) return { newCap: "" };
+        return { newCap: "", draft: Object.assign({}, st.draft, { capabilities: st.draft.capabilities.concat([v]) }) };
+      }),
+      addArea: () => this.setState((st) => {
+        const v = st.newArea.trim();
+        if (!v) return { newArea: "" };
+        return { newArea: "", draft: Object.assign({}, st.draft, { areas: st.draft.areas.concat([v]) }) };
+      }),
+      saveCaps: () => this.setState((st) => ({
+        capabilities: st.draft.capabilities, areas: st.draft.areas, editing: null, draft: {}
+      })),
+
+      record: RECORD.map((r, ri) => {
+        const HUES = ["#3E6EB4", "#2C6E49", "#B07A1E", "#6B4E9B"];
+        const hue = HUES[ri % HUES.length];
+        const p = s.countProgress === null ? 1 : s.countProgress;
+        const peak = Math.max.apply(null, r.series) || 1;
+        return {
+          label: r.label,
+          info: r.info,
+          infoOpen: s.openInfo === ri,
+          toggleInfo: () => this.setState((st) => ({ openInfo: st.openInfo === ri ? null : ri })),
+          shown: String(Math.round(Number(r.value) * p)),
+          bars: r.series.map((v) => ({
+            h: Math.max(3, Math.round((v / peak) * 30 * p)) + "px",
+            bg: v === 0 ? "rgba(15,15,14,0.08)" : hue,
+            op: v >= peak ? "1" : "0.55"
+          }))
+        };
+      }),
+
+      glance: [
+        { label: "Registered name", value: REGISTERED, locked: isOwner },
+        { label: "Business type", value: "Corporation", locked: isOwner },
+        { label: "Industry", value: "Transport & Warehousing", locked: isOwner },
+        { label: "Registered location", value: s.city + ", " + s.province, locked: false }
+      ],
+      showPlaceEdit: isOwner && editing !== "place",
+      placeRead: editing !== "place",
+      editingPlace: editing === "place",
+      cityDraft: d.city || "",
+      provinceDraft: d.province || "",
+      onCity: (e) => this.setState({ draft: Object.assign({}, this.state.draft, { city: e.target.value }) }),
+      onProvince: (e) => this.setState({ draft: Object.assign({}, this.state.draft, { province: e.target.value }) }),
+      startEditPlace: () => this.begin("place", { city: s.city, province: s.province }),
+      savePlace: () => this.setState((st) => ({
+        city: (st.draft.city || "").trim() || st.city,
+        province: (st.draft.province || "").trim() || st.province,
+        editing: null, draft: {}
+      })),
+
+      contactPerson: s.contactPerson,
+      mobile: s.mobile,
+      contactRead: editing !== "contact",
+      editingContact: editing === "contact",
+      contactDraft: d.contactPerson || "",
+      mobileDraft: d.mobile || "",
+      onContact: (e) => this.setState({ draft: Object.assign({}, this.state.draft, { contactPerson: e.target.value }) }),
+      onMobile: (e) => this.setState({ draft: Object.assign({}, this.state.draft, { mobile: e.target.value }) }),
+      startEditContact: () => this.begin("contact", { contactPerson: s.contactPerson, mobile: s.mobile }),
+      saveContact: () => this.setState((st) => ({
+        contactPerson: (st.draft.contactPerson || "").trim() || st.contactPerson,
+        mobile: (st.draft.mobile || "").trim() || st.mobile,
+        editing: null, draft: {}
+      })),
+
+      documents: DOCS,
+      docsOpen: s.docsOpen,
+      docsToggle: s.docsOpen ? "Hide verification details" : "View verification details",
+      docsChevron: s.docsOpen ? "rotate(180deg)" : "rotate(0deg)",
+      toggleDocs: () => this.setState((st) => ({ docsOpen: !st.docsOpen })),
+      verifyBody: isOwner
+        ? "Trustlink checked these records against the issuing agencies. To correct any of them, submit a re-verification."
+        : "Trustlink checks registration, tax, and permit records against the issuing agencies. It verifies documents, not performance.",
+      permitName: s.permit || "No permit on file",
+      permitFg: s.permit ? "rgba(15,15,14,0.65)" : "rgba(15,15,14,0.42)",
+      permitAction: s.permit ? "Replace" : "Upload",
+      uploadPermit: () => this.setState({ permit: "mayors-permit-2027.pdf" }),
+
+      areaFoot: isOwner
+        ? "Where you accept delivery and site work. Requirements here are recommended to you."
+        : "Where this business accepts delivery and site work.",
+
+      messageDisabled: !awarded,
+      messageEnabled: awarded,
+      messageTitle: awarded
+        ? "Messages are open — you have an award with this business."
+        : "Messages open only after an award between the two businesses.",
+      messageNote: awarded ? "Open — you have an award with them" : "Opens after an award between you",
+      contactBody: isOwner
+        ? "Another business can message you only after an award exists between you. Until then, everything happens through the requirement."
+        : (awarded
+          ? "You have an award with this business, so direct messages are open."
+          : "Direct messaging opens once an award exists between the two of you. Until then, everything happens through the requirement."),
+
+      openCount: String(OPEN.length),
+      open: OPEN.slice(0, 3).map((o) => ({
+        title: o.title, meta: o.meta, budget: o.budget, closes: o.closes,
+        showQuoted: isOwner ? false : o.mine,
+        quotedLabel: "You quoted",
+        pill: o.urgent ? "Closing soon" : "Open",
+        pillFg: o.urgent ? "#B4331F" : "#164E78",
+        clockFg: o.urgent ? "#B4331F" : "rgba(15,15,14,0.5)"
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
