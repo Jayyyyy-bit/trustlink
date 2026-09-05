@@ -215,5 +215,7 @@ export type OnboardingStep = 'IDENTITY' | 'OPERATIONS' | 'DOCUMENTS' | 'ARRIVAL'
 
 export type PostRequirementState = 'DETAILS' | 'DELIVERY' | 'CLOSING' | 'REVIEW';
 
+export type BusinessProfileState = 'VISITOR' | 'OWNER' | 'PREVIEW';
+
 /** Segmented control on the identity step. Decays; never a profile label. */
 export type SignupIntent = 'FIND_SUPPLIERS' | 'FIND_WORK' | 'BOTH';
