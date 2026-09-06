@@ -120,3 +120,13 @@ export const layout = {
 export const breakpoint = {
   desktop: 900,
 } as const;
+
+/** lucide-react-native icon sizes. Chrome stays quiet: nothing above `md` outside a
+ *  dedicated hero glyph. */
+export const iconSize = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 20,
+  xl: 32,
+} as const;

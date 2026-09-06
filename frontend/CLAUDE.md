@@ -16,7 +16,7 @@ Capstone project. React Native + Expo, one codebase for iOS, Android, and web.
 - Multiple states go in one component behind a prop, never separate screens.
 - Mock data lives in each feature's folder, in `mock.ts`.
 - `npx tsc --noEmit` must pass before you finish.
-- If the design has icons, build them from simple shapes. There is no icon library.
+- Icons come from `lucide-react-native`. Size and colour every icon from `tokens.ts` (`iconSize`, `color`) — never a raw pixel number or hex.
 - Widths: dashboard-style screens use `layout.maxWidthDashboard`, two-column reading screens use `layout.maxWidthWide`.
 
 ## Structure

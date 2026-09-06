@@ -40,7 +40,7 @@ export default function QuotationRoute() {
       requirement={mockRequirement}
       buyer={mockBuyer}
       onBack={() => router.back()}
-      onOpenBuyer={(businessId) => router.push(`/business/${businessId}`)}
+      onOpenBuyer={() => router.push('/business')}
       onSubmit={(input: QuotationDraftInput) => {
         // Hashing and ledger recording happen server-side. This mock stands in for that
         // response — the reference, hash, and ledger sequence below are fixed placeholders,
