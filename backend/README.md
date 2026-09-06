@@ -32,6 +32,8 @@ already-applied files are skipped.
 `001_init.sql` enables the `vector` extension and creates the four core tables:
 `businesses`, `requirements`, `quotations`, `ledger_entries`.
 
+`002_auth.sql` adds `accounts` and `refresh_tokens`.
+
 ## Other scripts
 
 ```
@@ -56,7 +58,44 @@ something that already exists.
 `ledger_entries` is append-only: there is no update or delete function in this
 module, and none should be added anywhere else in the codebase.
 
-## No routes yet
+## Auth
 
-This scaffold is schema, connection, migration runner, and the ledger module only.
-No HTTP routes are mounted in `src/app.ts` yet.
+`src/routes/auth.ts`, mounted at `/auth`:
+
+- `POST /auth/signup` — `{ email, password }`. Creates a bare account with no
+  business attached (effectively `UNVERIFIED`). Does not log in.
+- `POST /auth/login` — `{ email, password }`. Returns `{ accessToken, refreshToken,
+  expiresIn }`.
+- `POST /auth/refresh` — `{ refreshToken }`. Returns a new `{ accessToken,
+  expiresIn }`.
+- `POST /auth/logout` — `{ refreshToken }`. Revokes that refresh token.
+
+Passwords are hashed with bcrypt (`src/lib/passwords.ts`) — the plain password is
+never stored. Access tokens are JWTs valid for 15 minutes. Refresh tokens are
+random opaque strings valid for 7 days; only their SHA-256 hash is stored, in
+`refresh_tokens`, so a token can be revoked (logout) or checked without ever
+persisting it in plain text.
+
+`src/middleware/auth.ts` exports two middlewares:
+
+- `authenticate` — reads the `Authorization: Bearer <token>` header, verifies it,
+  and attaches `req.accountId`, `req.businessId`, and `req.businessStatus` (looked
+  up fresh from the database on every request, since verification can happen at
+  any time).
+- `requireVerifiedBusiness` — rejects with 403 unless `req.businessStatus ===
+  'VERIFIED'`. Use after `authenticate` on routes that require it, such as posting
+  a requirement or submitting a quotation.
+
+### Business status lifecycle
+
+An account is created with no business attached (`UNVERIFIED`). A business is
+created separately — not by a route in this backend — when onboarding is
+submitted; that sets the business's `credibility_status` to `PENDING` and links
+the account's `business_id` to it. **Moving a business from `PENDING` to
+`VERIFIED` is manual for now: there is no route for it.** Verify a business by
+updating it directly in the database, e.g.:
+
+```sql
+UPDATE businesses SET credibility_status = 'VERIFIED', credibility_verified_at = now()
+WHERE id = '<business id>';
+```
