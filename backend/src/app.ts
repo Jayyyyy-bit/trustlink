@@ -1,12 +1,12 @@
 // src/app.ts
-// The Express app itself. No routes are mounted yet — schema, connection, migration
-// runner, and the ledger module come first; routes get added once the API surface
-// is designed.
+// The Express app itself.
 
 import express, { type Express } from 'express';
+import { authRouter } from './routes/auth';
 
 export function createApp(): Express {
   const app = express();
   app.use(express.json());
+  app.use('/auth', authRouter);
   return app;
 }
