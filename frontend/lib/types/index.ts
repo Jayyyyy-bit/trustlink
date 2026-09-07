@@ -219,3 +219,5 @@ export type BusinessProfileState = 'VISITOR' | 'OWNER' | 'PREVIEW';
 
 /** Segmented control on the identity step. Decays; never a profile label. */
 export type SignupIntent = 'FIND_SUPPLIERS' | 'FIND_WORK' | 'BOTH';
+
+export type AuthMode = 'LOGIN' | 'SIGNUP';
