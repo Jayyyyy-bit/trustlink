@@ -15,7 +15,7 @@ export const businessesRouter = Router();
 
 const BUSINESS_TYPES: BusinessType[] = ['SOLE_PROP', 'PARTNERSHIP', 'CORPORATION', 'COOPERATIVE'];
 
-interface BusinessRow {
+export interface BusinessRow {
   id: string;
   registered_name: string;
   display_name: string | null;
@@ -39,7 +39,16 @@ interface BusinessRow {
   member_since_year: number;
 }
 
-function toBusiness(row: BusinessRow): Business {
+export const BUSINESS_COLUMNS = `
+  id, registered_name, display_name, business_type, category, city, province,
+  contact_person, contact_mobile, capabilities, service_areas,
+  credibility_status, credibility_verified_at, credibility_recheck_due_at, credibility_tier,
+  credibility_requirements_posted, credibility_requirements_awarded,
+  credibility_quotations_submitted, credibility_quotations_awarded,
+  profile_completion_pct, member_since_year
+`;
+
+export function toBusiness(row: BusinessRow): Business {
   return {
     id: row.id,
     registeredName: row.registered_name,
@@ -149,12 +158,7 @@ businessesRouter.post('/', authenticate, async (req, res) => {
          contact_person, contact_mobile, capabilities, service_areas,
          credibility_status, profile_completion_pct, member_since_year
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', 100, $12)
-       RETURNING id, registered_name, display_name, business_type, category, city, province,
-         contact_person, contact_mobile, capabilities, service_areas,
-         credibility_status, credibility_verified_at, credibility_recheck_due_at, credibility_tier,
-         credibility_requirements_posted, credibility_requirements_awarded,
-         credibility_quotations_submitted, credibility_quotations_awarded,
-         profile_completion_pct, member_since_year`,
+       RETURNING ${BUSINESS_COLUMNS}`,
       [
         id,
         registeredName,
@@ -187,4 +191,18 @@ businessesRouter.post('/', authenticate, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+businessesRouter.get('/:id', authenticate, async (req, res) => {
+  const { rows } = await pool.query<BusinessRow>(
+    `SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = $1`,
+    [req.params.id],
+  );
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ error: 'Business not found' });
+    return;
+  }
+
+  res.json(toBusiness(row));
 });

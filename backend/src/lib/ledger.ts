@@ -20,7 +20,7 @@ export interface AppendLedgerEntryInput {
   payload: JsonValue;
 }
 
-interface LedgerEntryRow {
+export interface LedgerEntryRow {
   id: string;
   sequence: number;
   type: LedgerEntryType;
@@ -66,7 +66,7 @@ export function computeLedgerHash(
   return createHash('sha256').update(previousHash ?? '').update(canonicalPayload).digest('hex');
 }
 
-function toLedgerEntry(row: LedgerEntryRow): LedgerEntry {
+export function toLedgerEntry(row: LedgerEntryRow): LedgerEntry {
   return {
     id: row.id,
     sequence: row.sequence,

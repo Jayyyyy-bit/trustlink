@@ -19,7 +19,7 @@ import type { Attachment, DeliverySite, Requirement, SpecRow } from '../types';
 
 export const requirementsRouter = Router();
 
-interface RequirementRow {
+export interface RequirementRow {
   id: string;
   ref: string;
   buyer_id: string;
@@ -41,7 +41,7 @@ interface RequirementRow {
   awarded_quotation_id: string | null;
 }
 
-function toRequirement(row: RequirementRow): Requirement {
+export function toRequirement(row: RequirementRow): Requirement {
   return {
     id: row.id,
     ref: row.ref,
@@ -65,7 +65,7 @@ function toRequirement(row: RequirementRow): Requirement {
   };
 }
 
-const REQUIREMENT_COLUMNS = `
+export const REQUIREMENT_COLUMNS = `
   id, ref, buyer_id, status, category, title, scope, specifications, quantity,
   budget_min, budget_max, delivery_site, delivery_window, attachments, closing_at,
   published_at, quotation_count, last_quotation_at, awarded_quotation_id
