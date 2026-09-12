@@ -4,6 +4,9 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import { authRouter } from './routes/auth';
+import { businessesRouter } from './routes/businesses';
+import { requirementsRouter } from './routes/requirements';
+import { quotationsRouter } from './routes/quotations';
 
 export function createApp(): Express {
   const app = express();
@@ -12,5 +15,10 @@ export function createApp(): Express {
   app.use(cors());
   app.use(express.json());
   app.use('/auth', authRouter);
+  // Every route mounted below applies `authenticate` (and, where noted, `requireVerifiedBusiness`)
+  // itself, per-route, in src/routes/*.ts.
+  app.use('/businesses', businessesRouter);
+  app.use('/requirements', requirementsRouter);
+  app.use('/quotations', quotationsRouter);
   return app;
 }
