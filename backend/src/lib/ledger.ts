@@ -7,6 +7,7 @@
 // in the codebase) — ledger_entries is append-only.
 
 import { createHash, randomUUID } from 'node:crypto';
+import type { PoolClient } from 'pg';
 import { pool } from '../db/pool';
 import type { LedgerEntry, LedgerEntryType } from '../types';
 
@@ -49,6 +50,22 @@ function sortKeysDeep(value: JsonValue): JsonValue {
   return value;
 }
 
+/** The one place the append hash formula lives — sha256(previousHash + canonicalPayload).
+ *  Exported so callers that need to verify an entry (rather than append one), such as the
+ *  release job's integrity check, recompute it the exact same way instead of duplicating
+ *  the formula. */
+export function computeLedgerHash(
+  previousHash: string | null,
+  entry: { type: LedgerEntryType; subjectId: string; payload: JsonValue },
+): string {
+  const canonicalPayload = canonicalize({
+    type: entry.type,
+    subjectId: entry.subjectId,
+    payload: entry.payload,
+  });
+  return createHash('sha256').update(previousHash ?? '').update(canonicalPayload).digest('hex');
+}
+
 function toLedgerEntry(row: LedgerEntryRow): LedgerEntry {
   return {
     id: row.id,
@@ -70,10 +87,25 @@ const LEDGER_APPEND_LOCK_KEY = parseInt(
   16,
 );
 
-export async function appendLedgerEntry(input: AppendLedgerEntryInput): Promise<LedgerEntry> {
-  const client = await pool.connect();
+/**
+ * Appends a ledger entry. By default this opens and commits its own transaction, exactly
+ * as before. Pass `existingClient` (a client already inside a `BEGIN`) to fold the append
+ * into a caller-owned transaction instead — e.g. the release job, which must move
+ * quotations, close the requirement, and append REQUIREMENT_CLOSED as one atomic unit. In
+ * that mode the caller owns BEGIN/COMMIT/ROLLBACK and the connection; this function only
+ * takes the advisory lock (safe to nest — Postgres advisory locks are re-entrant within a
+ * session) and inserts the row.
+ */
+export async function appendLedgerEntry(
+  input: AppendLedgerEntryInput,
+  existingClient?: PoolClient,
+): Promise<LedgerEntry> {
+  const client = existingClient ?? (await pool.connect());
+  const ownsTransaction = !existingClient;
   try {
-    await client.query('BEGIN');
+    if (ownsTransaction) {
+      await client.query('BEGIN');
+    }
     await client.query('SELECT pg_advisory_xact_lock($1)', [LEDGER_APPEND_LOCK_KEY]);
 
     const { rows: previousRows } = await client.query<{ hash: string }>(
@@ -81,16 +113,7 @@ export async function appendLedgerEntry(input: AppendLedgerEntryInput): Promise<
     );
     const previousHash = previousRows[0]?.hash ?? null;
 
-    const canonicalPayload = canonicalize({
-      type: input.type,
-      subjectId: input.subjectId,
-      payload: input.payload,
-    });
-
-    const hash = createHash('sha256')
-      .update(previousHash ?? '')
-      .update(canonicalPayload)
-      .digest('hex');
+    const hash = computeLedgerHash(previousHash, input);
 
     const id = randomUUID();
 
@@ -101,7 +124,9 @@ export async function appendLedgerEntry(input: AppendLedgerEntryInput): Promise<
       [id, input.type, input.subjectId, hash, previousHash],
     );
 
-    await client.query('COMMIT');
+    if (ownsTransaction) {
+      await client.query('COMMIT');
+    }
 
     const row = rows[0];
     if (!row) {
@@ -109,9 +134,13 @@ export async function appendLedgerEntry(input: AppendLedgerEntryInput): Promise<
     }
     return toLedgerEntry(row);
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (ownsTransaction) {
+      await client.query('ROLLBACK');
+    }
     throw err;
   } finally {
-    client.release();
+    if (ownsTransaction) {
+      client.release();
+    }
   }
 }
