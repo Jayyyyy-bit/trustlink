@@ -88,10 +88,9 @@ persisting it in plain text.
 
 ### Business status lifecycle
 
-An account is created with no business attached (`UNVERIFIED`). A business is
-created separately — not by a route in this backend — when onboarding is
-submitted; that sets the business's `credibility_status` to `PENDING` and links
-the account's `business_id` to it. **Moving a business from `PENDING` to
+An account is created with no business attached (`UNVERIFIED`). `POST /businesses`
+creates the business from onboarding, links it to the calling account, and sets
+`credibility_status` to `PENDING`. **Moving a business from `PENDING` to
 `VERIFIED` is manual for now: there is no route for it.** Verify a business by
 updating it directly in the database, e.g.:
 
@@ -99,3 +98,30 @@ updating it directly in the database, e.g.:
 UPDATE businesses SET credibility_status = 'VERIFIED', credibility_verified_at = now()
 WHERE id = '<business id>';
 ```
+
+## Core routes
+
+All of the below sit behind `authenticate`; routes marked (verified) also require
+`requireVerifiedBusiness`.
+
+- `POST /businesses` — creates the business from onboarding and links it to the
+  calling account (`PENDING`). 409 if the account already has one. Writes no
+  ledger entry — the ledger only records marketplace activity, not account
+  administration.
+- `POST /requirements` (verified) — creates and publishes a requirement in one
+  step: sets `status = OPEN`, stamps `published_at`, and appends a
+  `REQUIREMENT_PUBLISHED` ledger entry.
+- `GET /requirements` — the feed: open requirements only, ordered by closing
+  time, excluding the caller's own.
+- `GET /requirements/:ref` — one requirement. Quotation contents are included
+  only when the caller owns it and its closing time has passed; otherwise the
+  response carries `quotationCount` only — enforced by never constructing the
+  quotations query outside that branch, not by filtering the response.
+- `POST /quotations` (verified) — submits a sealed quotation against an `OPEN`,
+  not-yet-closed requirement. Canonicalises the payload, appends a
+  `QUOTATION_SUBMITTED` ledger entry, and returns `{ ref, submittedAt,
+  hashTruncated, sequence }`.
+- `POST /quotations/:ref/withdraw` — only while `SUBMITTED`, and only by the
+  submitting business. Appends a `QUOTATION_WITHDRAWN` entry and updates the row
+  in place; the original row is never deleted.
+- `GET /quotations/mine` — the caller's own quotations, in full.
