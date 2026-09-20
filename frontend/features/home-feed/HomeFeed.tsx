@@ -67,7 +67,7 @@ export interface HomeFeedProps {
 /* ─── Shared state hook ─────────────────────────────── */
 
 function useHomeFeed(props: HomeFeedProps) {
-  const { viewer, requirements } = props;
+  const { requirements } = props;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -85,7 +85,7 @@ function useHomeFeed(props: HomeFeedProps) {
   }));
 
   const filtered = requirements.filter((r) => categoryFilter === 'All' || r.category === categoryFilter);
-  const matchedCount = filtered.filter((r) => r.category === viewer.category).length;
+  const matchedCount = filtered.filter((r) => Boolean(r.matchReason)).length;
   const resultLabel = `${filtered.length} Open · ${matchedCount} Matched to You`;
 
   const toggleSave = (id: string) =>
@@ -146,7 +146,6 @@ function PhoneHomeFeed(props: HomeFeedProps) {
               key={r.id}
               requirement={r}
               buyer={requirementBuyers[r.buyerId]}
-              viewer={viewer}
               now={st.now}
               saved={st.saved.has(r.id)}
               quoted={st.sessionQuoted.has(r.id)}
@@ -266,7 +265,6 @@ function WideHomeFeed(props: HomeFeedProps) {
                   key={r.id}
                   requirement={r}
                   buyer={requirementBuyers[r.buyerId]}
-                  viewer={viewer}
                   now={st.now}
                   saved={st.saved.has(r.id)}
                   quoted={st.sessionQuoted.has(r.id)}
