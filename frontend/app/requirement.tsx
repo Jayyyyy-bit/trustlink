@@ -18,6 +18,7 @@ import { USE_MOCK_DATA } from '../lib/api/flags';
 import { ApiError } from '../lib/api/client';
 import { getRequirement } from '../lib/api/requirements';
 import { getBusiness } from '../lib/api/businesses';
+import { getMe } from '../lib/api/me';
 import { getMyQuotations, withdrawQuotation } from '../lib/api/quotations';
 import type { Business, BusinessId, LedgerEntry, Quotation, Requirement } from '../lib/types';
 
@@ -28,6 +29,11 @@ interface LiveData {
   respondents: Record<BusinessId, Respondent>;
   ownQuotation: Quotation | null;
   ledgerEntry: LedgerEntry | null;
+  // Whether the caller's own business is this requirement's buyer — from GET /me, never
+  // from a route param. Only meaningful when `quotations` is null: when it's present the
+  // server has already done this same check (see GET /requirements/:ref) to decide
+  // whether to include quotation contents at all.
+  isOwner: boolean;
 }
 
 export default function RequirementRoute() {
@@ -43,22 +49,30 @@ export default function RequirementRoute() {
     setError(null);
     setData(null);
     try {
-      const result = await getRequirement(ref);
+      const [result, me] = await Promise.all([getRequirement(ref), getMe()]);
       const requirement: Requirement = result;
       const released = 'quotations' in result ? result.quotations : null;
+      const isOwner = me.business !== null && me.business.id === requirement.buyerId;
 
       if (released) {
         const respondentIds = Array.from(new Set(released.map((q) => q.respondentId)));
         const businesses = await Promise.all(respondentIds.map((id) => getBusiness(id)));
         const respondents = Object.fromEntries(businesses.map((b) => [b.id, b])) as Record<BusinessId, Respondent>;
-        setData({ requirement, quotations: released, buyer: null, respondents, ownQuotation: null, ledgerEntry: null });
+        setData({ requirement, quotations: released, buyer: null, respondents, ownQuotation: null, ledgerEntry: null, isOwner });
+        return;
+      }
+
+      // Owner, closing not yet passed: the server withholds quotation contents (and there
+      // are none of "my own" to fetch — an owner never quotes their own requirement).
+      if (isOwner) {
+        setData({ requirement, quotations: null, buyer: null, respondents: {}, ownQuotation: null, ledgerEntry: null, isOwner });
         return;
       }
 
       const [buyer, mine] = await Promise.all([getBusiness(requirement.buyerId), getMyQuotations()]);
       const own = mine.quotations.find((q) => q.requirementId === requirement.id && q.status !== 'WITHDRAWN') ?? null;
       const ledgerEntry = own ? mine.ledgerEntries[own.id] ?? null : null;
-      setData({ requirement, quotations: null, buyer, respondents: {}, ownQuotation: own, ledgerEntry });
+      setData({ requirement, quotations: null, buyer, respondents: {}, ownQuotation: own, ledgerEntry, isOwner });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load this requirement.');
     }
@@ -93,18 +107,18 @@ export default function RequirementRoute() {
       );
     }
 
-    if (dev === 'released' || data.quotations) {
+    if (data.quotations) {
       return (
         <RequirementDetail
           state="OWNER_RELEASED"
           requirement={data.requirement}
-          quotations={data.quotations ?? []}
+          quotations={data.quotations}
           respondents={data.respondents}
         />
       );
     }
 
-    if (dev === 'sealed') {
+    if (data.isOwner) {
       return <RequirementDetail state="OWNER_SEALED" requirement={data.requirement} />;
     }
 
