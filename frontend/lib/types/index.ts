@@ -103,6 +103,8 @@ export interface Requirement {
   quotationCount: number;     // count only while sealed — never contents
   lastQuotationAt: ISODateTime | null; // timing only, never contents — recency signal for feed cards
   awardedQuotationId: string | null;
+  /** Set by GET /requirements only: why this matched the caller's business (their capability and service area). Null/absent when nothing matched. */
+  matchReason?: string | null;
 }
 
 /* ─── Quotation ─────────────────────────────────────── */

@@ -1,5 +1,5 @@
 // features/home-feed/format.ts
-import type { Business, ISODateTime, Requirement, RequirementStatus, TrustTier } from '../../lib/types';
+import type { ISODateTime, Requirement, RequirementStatus, TrustTier } from '../../lib/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -117,12 +117,4 @@ export function computeSignal(requirement: Requirement, hoursLeft: number, close
     return { label: 'Matched', hint: 'Trustlink matched this to your business profile.', urgent: false };
   }
   return null;
-}
-
-export function matchReason(buyerCity: string, viewer: Business): string {
-  const capability = (viewer.capabilities[0] ?? viewer.category).toLowerCase();
-  if (buyerCity === viewer.city) {
-    return `Same category as your business, and the site is in ${viewer.city} — your service area. Your profile lists ${capability}.`;
-  }
-  return `Same category as your business. ${buyerCity} is within your listed delivery range, and the scope fits your ${capability} capability.`;
 }

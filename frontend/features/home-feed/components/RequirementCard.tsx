@@ -5,8 +5,8 @@ import type { ViewStyle } from 'react-native';
 import { Bookmark, ArrowRight } from 'lucide-react-native';
 import { color, font, fontSize, iconSize, letterSpacing, lineHeight, radius, space, layout } from '../../../components/ui/tokens';
 import { AvatarChip, initials } from '../../../components/ui/AvatarChip';
-import type { Business, ISODateTime, Requirement, TrustTier } from '../../../lib/types';
-import { computeSignal, formatBudget, formatCompactCountdown, formatMonthYear, matchReason, tierLabel, timeAgoWords } from '../format';
+import type { ISODateTime, Requirement, TrustTier } from '../../../lib/types';
+import { computeSignal, formatBudget, formatCompactCountdown, formatMonthYear, tierLabel, timeAgoWords } from '../format';
 import type { FeedBuyer } from '../types';
 import { FeedButton } from './FeedButton';
 
@@ -69,7 +69,6 @@ const cardHoverTransitionOnWeb: ViewStyle =
 export function RequirementCard({
   requirement,
   buyer,
-  viewer,
   now,
   saved,
   quoted,
@@ -79,7 +78,6 @@ export function RequirementCard({
 }: {
   requirement: Requirement;
   buyer: FeedBuyer;
-  viewer: Business;
   now: number;
   saved: boolean;
   quoted: boolean;
@@ -88,7 +86,7 @@ export function RequirementCard({
   onSelect: () => void;
 }) {
   const { label: countdownLabel, closed, hoursLeft } = formatCompactCountdown(requirement.closingAt, now);
-  const matched = requirement.category === viewer.category;
+  const matched = Boolean(requirement.matchReason);
   const signal = computeSignal(requirement, hoursLeft, closed, matched, now);
   const urgent = !closed && hoursLeft < 24;
   const critical = !closed && hoursLeft < 6;
@@ -156,10 +154,10 @@ export function RequirementCard({
         </View>
       </View>
 
-      {matched && (
+      {requirement.matchReason && (
         <View style={styles.matchBox}>
           <Text style={styles.microLabel}>Why this matches</Text>
-          <Text style={styles.matchReasonText}>{matchReason(buyer.city, viewer)}</Text>
+          <Text style={styles.matchReasonText}>{requirement.matchReason}</Text>
         </View>
       )}
 
