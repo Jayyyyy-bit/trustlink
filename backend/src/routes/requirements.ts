@@ -15,6 +15,8 @@ import { authenticate, requireVerifiedBusiness } from '../middleware/auth';
 import { pool } from '../db/pool';
 import { appendLedgerEntry } from '../lib/ledger';
 import { nextRequirementRef } from '../lib/refs';
+import { tryEmbedRequirement } from '../lib/embeddings';
+import { scoreRequirement, type ViewerProfile } from '../lib/matching';
 import type { Attachment, DeliverySite, Requirement, SpecRow } from '../types';
 
 export const requirementsRouter = Router();
@@ -178,13 +180,16 @@ requirementsRouter.post('/', authenticate, requireVerifiedBusiness, async (req, 
   const id = randomUUID();
   const ref = await nextRequirementRef();
   const publishedAt = new Date();
+  // Best effort: a provider failure publishes the requirement with no embedding and the
+  // feed falls back to category/service-area matching for it.
+  const scopeEmbedding = await tryEmbedRequirement(title, scope, specifications);
 
   const { rows } = await pool.query<RequirementRow>(
     `INSERT INTO requirements (
        id, ref, buyer_id, status, category, title, scope, specifications, quantity,
        budget_min, budget_max, delivery_site, delivery_window, attachments,
-       closing_at, published_at
-     ) VALUES ($1, $2, $3, 'OPEN', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       closing_at, published_at, scope_embedding
+     ) VALUES ($1, $2, $3, 'OPEN', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::vector)
      RETURNING ${REQUIREMENT_COLUMNS}`,
     [
       id,
@@ -202,6 +207,7 @@ requirementsRouter.post('/', authenticate, requireVerifiedBusiness, async (req, 
       JSON.stringify(attachments),
       closingAt,
       publishedAt,
+      scopeEmbedding,
     ],
   );
   const row = rows[0];
@@ -218,17 +224,83 @@ requirementsRouter.post('/', authenticate, requireVerifiedBusiness, async (req, 
   res.status(201).json(toRequirement(row));
 });
 
-requirementsRouter.get('/', authenticate, async (req, res) => {
-  const { rows } = await pool.query<RequirementRow>(
-    `SELECT ${REQUIREMENT_COLUMNS}
-     FROM requirements
-     WHERE status = 'OPEN'
-       AND ($1::text IS NULL OR buyer_id != $1)
-     ORDER BY closing_at ASC`,
-    [req.businessId ?? null],
-  );
+interface FeedRow extends RequirementRow {
+  buyer_city: string;
+  buyer_province: string;
+  distance: number | null;
+  nearest_capability: string | null;
+  nearest_capability_distance: number | null;
+}
 
-  res.json(rows.map(toRequirement));
+interface ViewerRow {
+  category: string;
+  capabilities: string[];
+  service_areas: string[];
+}
+
+// GET /requirements — the open feed, ranked by match (cosine distance between the
+// caller's business embedding and each requirement's scope embedding) combined with
+// closing time; see src/lib/matching.ts. Requirements or businesses without an
+// embedding are ranked by a category/service-area fallback, never dropped.
+requirementsRouter.get('/', authenticate, async (req, res) => {
+  const viewerId = req.businessId ?? null;
+  const columns = REQUIREMENT_COLUMNS.split(',').map((c) => `r.${c.trim()}`).join(', ');
+
+  const [{ rows }, { rows: viewerRows }] = await Promise.all([
+    pool.query<FeedRow>(
+      `SELECT ${columns},
+              buyer.city AS buyer_city, buyer.province AS buyer_province,
+              r.scope_embedding <=> viewer.capabilities_embedding AS distance,
+              cap.capability AS nearest_capability, cap.distance AS nearest_capability_distance
+       FROM requirements r
+       JOIN businesses buyer ON buyer.id = r.buyer_id
+       LEFT JOIN businesses viewer ON viewer.id = $1
+       LEFT JOIN LATERAL (
+         SELECT c.capability, c.embedding <=> r.scope_embedding AS distance
+         FROM business_capability_embeddings c
+         WHERE c.business_id = $1 AND r.scope_embedding IS NOT NULL
+         ORDER BY c.embedding <=> r.scope_embedding
+         LIMIT 1
+       ) cap ON true
+       WHERE r.status = 'OPEN'
+         AND ($1::text IS NULL OR r.buyer_id != $1)`,
+      [viewerId],
+    ),
+    viewerId
+      ? pool.query<ViewerRow>('SELECT category, capabilities, service_areas FROM businesses WHERE id = $1', [viewerId])
+      : Promise.resolve({ rows: [] as ViewerRow[] }),
+  ]);
+
+  const viewerRow = viewerRows[0];
+  const viewer: ViewerProfile | null = viewerRow
+    ? { category: viewerRow.category, capabilities: viewerRow.capabilities, serviceAreas: viewerRow.service_areas }
+    : null;
+
+  const now = Date.now();
+  const ranked = rows
+    .map((row) => {
+      const { score, matchReason } = scoreRequirement(
+        viewer,
+        {
+          category: row.category,
+          title: row.title,
+          scope: row.scope,
+          specifications: row.specifications,
+          deliverySite: row.delivery_site,
+          buyerCity: row.buyer_city,
+          buyerProvince: row.buyer_province,
+          closingAt: row.closing_at,
+          distance: row.distance,
+          nearestCapability: row.nearest_capability,
+          nearestCapabilityDistance: row.nearest_capability_distance,
+        },
+        now,
+      );
+      return { row, score, matchReason };
+    })
+    .sort((a, b) => b.score - a.score || a.row.closing_at.getTime() - b.row.closing_at.getTime());
+
+  res.json(ranked.map(({ row, matchReason }) => ({ ...toRequirement(row), matchReason })));
 });
 
 requirementsRouter.get('/:ref', authenticate, async (req, res) => {
