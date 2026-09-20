@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { pool } from '../db/pool';
+import { refreshBusinessEmbeddings } from '../lib/embeddings';
 import type { Business, BusinessType } from '../types';
 
 export const businessesRouter = Router();
@@ -184,6 +185,9 @@ businessesRouter.post('/', authenticate, async (req, res) => {
 
     await client.query('COMMIT');
 
+    // After commit, best effort: onboarding never fails on an embedding-provider error.
+    await refreshBusinessEmbeddings(id);
+
     res.status(201).json(toBusiness(row));
   } catch (err) {
     await client.query('ROLLBACK');
@@ -191,6 +195,57 @@ businessesRouter.post('/', authenticate, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// PATCH /businesses/me — change the caller's capabilities and/or service areas. The old
+// embeddings are cleared in the same transaction so a failed re-embed leaves the business
+// on fallback matching rather than ranking with vectors of text it no longer has.
+businessesRouter.patch('/me', authenticate, async (req, res) => {
+  if (!req.businessId) {
+    res.status(404).json({ error: 'Account has no business' });
+    return;
+  }
+
+  const { capabilities, serviceAreas } = req.body as Record<string, unknown>;
+  if (capabilities !== undefined && !isStringArray(capabilities)) {
+    res.status(400).json({ error: 'capabilities must be an array of strings' });
+    return;
+  }
+  if (serviceAreas !== undefined && !isStringArray(serviceAreas)) {
+    res.status(400).json({ error: 'serviceAreas must be an array of strings' });
+    return;
+  }
+  if (capabilities === undefined && serviceAreas === undefined) {
+    res.status(400).json({ error: 'Provide capabilities and/or serviceAreas' });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE businesses
+       SET capabilities = COALESCE($2, capabilities),
+           service_areas = COALESCE($3, service_areas),
+           capabilities_embedding = NULL
+       WHERE id = $1`,
+      [req.businessId, capabilities ?? null, serviceAreas ?? null],
+    );
+    await client.query('DELETE FROM business_capability_embeddings WHERE business_id = $1', [req.businessId]);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  await refreshBusinessEmbeddings(req.businessId);
+
+  const { rows } = await pool.query<BusinessRow>(`SELECT ${BUSINESS_COLUMNS} FROM businesses WHERE id = $1`, [
+    req.businessId,
+  ]);
+  res.json(toBusiness(rows[0] as BusinessRow));
 });
 
 businessesRouter.get('/:id', authenticate, async (req, res) => {
